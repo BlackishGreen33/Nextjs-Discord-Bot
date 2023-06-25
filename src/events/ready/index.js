@@ -6,5 +6,5 @@ export const event = {
 };
 
 export const action = (c) => {
-	console.log(`Ready! Logged in as ${c.user.tag}`)
+	console.log(`Ready! Logged in as ${c.user.tag}`);
 };
