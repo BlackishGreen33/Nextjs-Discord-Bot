@@ -1,10 +1,10 @@
-import { Events } from 'discord.js';
+import { Events } from "discord.js";
 
 export const event = {
-	name: Events.ClientReady,
-	once: true,
+  name: Events.ClientReady,
+  once: true,
 };
 
 export const action = (c) => {
-	console.log(`Ready! Logged in as ${c.user.tag}`);
+  console.log(`啟動! 機器人 ${c.user.tag} 已上線`);
 };

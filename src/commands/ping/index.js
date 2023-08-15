@@ -5,5 +5,13 @@ export const command = new SlashCommandBuilder()
 	.setDescription('ping command');
 
 export const action = async (ctx) => {
-	ctx.reply('pong !');
+	if (!ctx.isChatInputCommand()) return;
+	if (ctx.commandName === 'ping') {
+		const msg = await ctx.reply({
+			content: "正在計算延遲......",
+			fetchReply: true
+		});
+		const ping = msg.createdTimestamp - ctx.createdTimestamp;
+		ctx.editReply(`機器人延遲：${ping} ms`)
+	}
 };
