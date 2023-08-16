@@ -22,4 +22,4 @@ appStore.client = client;
 
 loadEvents();
 
-client.login(process.env.TOKEN);
+client.login("MTExNDQxMDQ4MTIxNDU2NjQyMA.GheD27.dmoJgZ9oD7xCRrM4IdlabHrSgNlK8RuHqsuolo");

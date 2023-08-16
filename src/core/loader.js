@@ -3,10 +3,10 @@ import fg from "fast-glob";
 import { useAppStore } from "@/store/app";
 
 const updateSlashCommands = async (commands) => {
-  const rest = new REST({ version: 10 }).setToken(process.env.TOKEN);
+  const rest = new REST({ version: 10 }).setToken("MTExNDQxMDQ4MTIxNDU2NjQyMA.GheD27.dmoJgZ9oD7xCRrM4IdlabHrSgNlK8RuHqsuolo");
   await rest.put(
     Routes.applicationGuildCommands(
-      process.env.APPLICATION_ID,
+      "1114410481214566420",
       "616449516840681476"
     ),
     {
