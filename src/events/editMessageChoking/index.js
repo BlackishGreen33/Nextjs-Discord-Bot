@@ -1,7 +1,7 @@
 import { Events } from "discord.js";
 
 export const event = {
-  name: Events.UserUpdate,
+  name: Events.MessageUpdate,
 };
 
 export const action = (msg) => {
