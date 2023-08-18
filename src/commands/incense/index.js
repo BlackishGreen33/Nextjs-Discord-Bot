@@ -7,6 +7,6 @@ export const command = new SlashCommandBuilder()
 export const action = async (ctx) => {
 	if (!ctx.isChatInputCommand()) return;
 	if (ctx.commandName === '上香') {
-		msg.channel.send("https://media.discordapp.net/attachments/1043421603695960114/1043421760634228817/2pK5nLt.gif");
+		ctx.reply("https://media.discordapp.net/attachments/1043421603695960114/1043421760634228817/2pK5nLt.gif");
 	}
 };
