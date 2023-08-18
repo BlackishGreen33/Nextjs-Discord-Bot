@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 
 export const command = new SlashCommandBuilder()
 	.setName('ping')
-	.setDescription('ping command');
+	.setDescription('查看機器人延遲');
 
 export const action = async (ctx) => {
 	if (!ctx.isChatInputCommand()) return;
