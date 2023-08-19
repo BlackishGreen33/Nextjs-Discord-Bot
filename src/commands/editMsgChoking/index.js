@@ -10,6 +10,6 @@ export const command = new SlashCommandBuilder()
 export const action = async (ctx) => {
   if (!ctx.isChatInputCommand()) return;
   if (ctx.commandName === "還敢偷改啊") {
-    ctx.channel.send(`${store.author} 抓到  還敢偷改啊\n`+`原訊息內容：${store.content}`);
+    ctx.channel.send(`<@${store.author}> 抓到  還敢偷改啊\n`+`原訊息內容：${store.content}`);
   }
 };
