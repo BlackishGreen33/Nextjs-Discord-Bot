@@ -1,5 +1,5 @@
 import { Events } from "discord.js";
-import jsonData from "./data.json";
+import jsonData from "@/store/data.json";
 
 export const event = {
   name: Events.MessageCreate,
