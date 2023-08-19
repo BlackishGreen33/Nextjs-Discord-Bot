@@ -9,6 +9,6 @@ export const event = {
 
 export const action = (msg) => {
   if (msg.author.bot) return;
-  store.author = msg.author.name;
+  store.author = msg.author.id;
   store.content = msg.content;
 };
