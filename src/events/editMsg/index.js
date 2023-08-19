@@ -1,4 +1,7 @@
 import { Events } from "discord.js";
+import { usePreEditMsgStore } from "@/store/app";
+
+const store = usePreEditMsgStore;
 
 export const event = {
   name: Events.MessageUpdate,
@@ -6,6 +9,6 @@ export const event = {
 
 export const action = (msg) => {
   if (msg.author.bot) return;
-  msg.reply("抓到  還敢收回啊");
-  msg.reply(`原訊息內容：${msg.content}`);
+  store.author = msg.author.name;
+  store.content = msg.content;
 };

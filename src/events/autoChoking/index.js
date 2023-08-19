@@ -5,11 +5,16 @@ export const event = {
   name: Events.MessageCreate,
 };
 
+const trytry = "907221563496099850";
+
 export const action = (msg) => {
   if (msg.author.bot) return;
   let outputValue = findOutValue(jsonData, msg.content);
   if (outputValue) {
     msg.reply(outputValue);
+  }
+  if (msg.content == "蔡蔡") {
+    msg.reply(`<@${trytry}>` + " 要不要打mai");
   }
 };
 
