@@ -9,8 +9,8 @@ export const command = new SlashCommandBuilder()
   );
 
 export const action = async (interaction) => {
-  if (!ctx.isChatInputCommand()) return;
-  if (ctx.commandName === "play") {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "play") {
     await music.play(interaction);
   }
 };

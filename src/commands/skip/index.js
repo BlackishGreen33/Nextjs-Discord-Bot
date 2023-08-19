@@ -6,8 +6,8 @@ export const command = new SlashCommandBuilder()
   .setDescription("跳過歌曲");
 
 export const action = async (interaction) => {
-  if (!ctx.isChatInputCommand()) return;
-  if (ctx.commandName === "skip") {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "skip") {
     music.skip(interaction);
   }
 };

@@ -6,8 +6,8 @@ export const command = new SlashCommandBuilder()
   .setDescription("查看歌曲隊列");
 
 export const action = async (interaction) => {
-  if (!ctx.isChatInputCommand()) return;
-  if (ctx.commandName === "queue") {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "queue") {
     music.nowQueue(interaction);
   }
 };

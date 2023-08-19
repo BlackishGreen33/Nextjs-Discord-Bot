@@ -6,8 +6,8 @@ export const command = new SlashCommandBuilder()
   .setDescription("恢復播放");
 
 export const action = async (interaction) => {
-  if (!ctx.isChatInputCommand()) return;
-  if (ctx.commandName === "resume") {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "resume") {
     music.resume(interaction);
   }
 };

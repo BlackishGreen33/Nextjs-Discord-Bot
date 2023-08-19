@@ -6,8 +6,8 @@ export const command = new SlashCommandBuilder()
   .setDescription("暫停音樂");
 
 export const action = async (interaction) => {
-  if (!ctx.isChatInputCommand()) return;
-  if (ctx.commandName === "pause") {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === "pause") {
     music.pause(interaction);
   }
 };
