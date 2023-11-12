@@ -1,6 +1,6 @@
-<h1 align="center">Discord-Bot</h1>
+<h1 align="center">Life_is_BG</h1>
 <div align="center">
-  <h3>一個用 JavaScript 寫的 Discord 機器人</h3>
+  <h3>一隻用 JavaScript 寫的 Discord 機器人</h3>
   <a href="https://github.com/BlackishGreen33/Discord-Bot"><strong>探索專案文檔 »</strong></a>
   <br />
   <br />
