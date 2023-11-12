@@ -19,7 +19,7 @@ export const action = (msg) => {
     msg.reply(`<@${trytry}>` + " 要不要打mai");
   }
   if (send) {
-    msg.send(send);
+    msg.channel.send(send);
   }
 };
 
