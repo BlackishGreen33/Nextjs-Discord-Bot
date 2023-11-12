@@ -1,4 +1,17 @@
 {
+  "name": "life_is_bg",
+  "version": "1.0.3",
+  "homepage": "https://github.com/BlackishGreen33/Discord-Bot.git",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BlackishGreen33/Discord-Bot.git"
+  },
+  "author": {
+    "name": "BlackishGreen33",
+    "email": "s5460703@gmail.com",
+    "url": "https://blackishgreen.vercel.app/"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite-node src/main.js"
