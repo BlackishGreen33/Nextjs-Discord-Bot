@@ -1,4 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import request from "request";
+import cheerio from "cheerio";
 
 export const command = new SlashCommandBuilder()
   .setName("nhentai")
@@ -12,7 +14,7 @@ export const action = async (ctx) => {
   if (ctx.commandName === "nhentai") {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const img = fetchImgSrc(url + "/1/");
+    const img = getImg(url)
     // const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
@@ -46,48 +48,14 @@ export const action = async (ctx) => {
   }
 };
 
-// const fetchH2Text = async (url) => {
-//   try {
-//     const response = await fetch(url);
-//     if (response.ok) {
-//       const htmlContent = await response.text();
-//       return parseHTML(htmlContent);
-//     } else {
-//       throw new Error("error");
-//     }
-//   } catch (error) {
-//     console.log(error.message);
-//   }
-// };
-
-// const parseHTML = (htmlContent) => {
-//   const div = document.createElement("div");
-//   div.innerHTML = htmlContent;
-//   const h2Element = div.querySelector("h2");
-//   return h2Element.textContent;
-// };
-
-const fetchImgSrc = async (url) => {
-  try {
-    const response = await fetch(url);
-    if (response.ok) {
-      const htmlContent = await response.text();
-      return parseImgSrc(htmlContent);
+const getImg = (url) => {
+  request(url + "/1/", (error, response, body) => {
+    if (!error && response.statusCode === 200) {
+      const $ = cheerio.load(body);
+      const src = $("img").attr("src");
+      return src;
     } else {
-      throw new Error("error");
+      console.error(error);
     }
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-const parseImgSrc = (htmlContent) => {
-  const div = document.createElement("div");
-  div.innerHTML = htmlContent;
-  const imgElement = div.querySelector("img");
-  if (imgElement) {
-    return imgElement.getAttribute("src");
-  } else {
-    throw new Error("not found image");
-  }
+  });
 };
