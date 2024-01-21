@@ -14,8 +14,7 @@ export const action = async (ctx) => {
   if (ctx.commandName === "nhentai") {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const body = getImg(url);
-    // const img = getImg(url);
+    const img = getImg(url + "/1/");
     // const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
@@ -39,25 +38,24 @@ export const action = async (ctx) => {
       //   value: "Some value here",
       //   inline: true,
       // })
-      // .setImage(img)
+      .setImage(img)
       .setTimestamp();
     // .setFooter({
     //   text: "Some footer text here",
     //   iconURL: "https://i.imgur.com/AfFp7pu.png",
     // });
     ctx.reply({ embeds: [embed] });
-    ctx.send(body);
   }
 };
 
 const getImg = (url) => {
-  request(url + "/1/", (error, response, body) => {
+  request(url, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const $ = cheerio.load(body);
-      // const src = $(".content #image-container a img").attr("src");
-      return body;
+      const src = $("img").attr("src");
+      return src;
     } else {
-      console.error(error);
+      console.error("報錯："+error);
     }
   });
 };
