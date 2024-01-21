@@ -15,7 +15,7 @@ export const action = async (ctx) => {
     const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
-      // .setTitle(title)
+      .setTitle(title)
       .setURL(url)
       // .setAuthor({
       //   name: "Some name",
