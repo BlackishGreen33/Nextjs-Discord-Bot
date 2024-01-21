@@ -55,6 +55,7 @@ const getImg = (url) => {
     }
     const $ = cheerio.load(body);
     const src = $("img").attr("src");
+    console.log(body);
     console.log(src);
     return src;
   });
