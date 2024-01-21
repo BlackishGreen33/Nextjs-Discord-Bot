@@ -14,7 +14,7 @@ export const action = async (ctx) => {
   if (ctx.commandName === "nhentai") {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const img = getImg(url)
+    const img = getImg(url);
     // const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
@@ -53,6 +53,7 @@ const getImg = (url) => {
     if (!error && response.statusCode === 200) {
       const $ = cheerio.load(body);
       const src = $("img").attr("src");
+      console.log(src);
       return src;
     } else {
       console.error(error);
