@@ -1,5 +1,4 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { API, TagTypes } from "nhentai-api";
 
 export const command = new SlashCommandBuilder()
   .setName("nhentai")
@@ -11,13 +10,9 @@ export const command = new SlashCommandBuilder()
 export const action = async (ctx) => {
   if (!ctx.isChatInputCommand()) return;
   if (ctx.commandName === "nhentai") {
-    const api = new API();
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    let img = "";
-    api.getBook(number).then((book) => {
-      img = api.getImageURL(book.cover);
-    });
+    const img = `https://t.nhentai.net/galleries/${number}/cover.jpg`;
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
       .setTitle(url)
