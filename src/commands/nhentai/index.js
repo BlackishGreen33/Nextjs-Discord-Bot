@@ -12,10 +12,10 @@ export const action = async (ctx) => {
   if (ctx.commandName === "nhentai") {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const title = fetchH2Text(url);
+    // const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
-      .setTitle(title)
+      .setTitle(url)
       .setURL(url)
       // .setAuthor({
       //   name: "Some name",
@@ -45,23 +45,23 @@ export const action = async (ctx) => {
   }
 };
 
-const fetchH2Text = async (url) => {
-  try {
-    const response = await fetch(url);
-    if (response.ok) {
-      const htmlContent = await response.text();
-      return parseHTML(htmlContent);
-    } else {
-      throw new Error("error");
-    }
-  } catch (error) {
-    console.log(error.message);
-  }
-};
+// const fetchH2Text = async (url) => {
+//   try {
+//     const response = await fetch(url);
+//     if (response.ok) {
+//       const htmlContent = await response.text();
+//       return parseHTML(htmlContent);
+//     } else {
+//       throw new Error("error");
+//     }
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// };
 
-const parseHTML = (htmlContent) => {
-  const div = document.createElement("div");
-  div.innerHTML = htmlContent;
-  const h2Element = div.querySelector("h2");
-  return h2Element.textContent;
-};
+// const parseHTML = (htmlContent) => {
+//   const div = document.createElement("div");
+//   div.innerHTML = htmlContent;
+//   const h2Element = div.querySelector("h2");
+//   return h2Element.textContent;
+// };
