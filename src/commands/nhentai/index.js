@@ -26,7 +26,7 @@ export const action = async (ctx) => {
       //   iconURL: "https://i.imgur.com/AfFp7pu.png",
       //   url: "https://discord.js.org",
       // })
-      .setDescription(body)
+      .setDescription("Some description here")
       // .setThumbnail("https://i.imgur.com/AfFp7pu.png")
       // .addFields(
       //   { name: "Regular field title", value: "Some value here" },
@@ -46,6 +46,7 @@ export const action = async (ctx) => {
     //   iconURL: "https://i.imgur.com/AfFp7pu.png",
     // });
     ctx.reply({ embeds: [embed] });
+    ctx.send(body);
   }
 };
 
