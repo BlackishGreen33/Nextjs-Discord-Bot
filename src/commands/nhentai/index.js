@@ -45,20 +45,23 @@ export const action = async (ctx) => {
   }
 };
 
-const fetchH2Text = (url) => {
-  const xhr = new XMLHttpRequest();
-  xhr.open("GET", url, true);
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-      var htmlContent = xhr.responseText;
+const fetchH2Text = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (response.ok) {
+      const htmlContent = await response.text();
       return parseHTML(htmlContent);
+    } else {
+      throw new Error("error");
     }
-  };
-  xhr.send();
+  } catch (error) {
+    console.log(error.message);
+  }
 };
 
 const parseHTML = (htmlContent) => {
   const div = document.createElement("div");
   div.innerHTML = htmlContent;
-  return div.querySelector("h2").textContent;
+  const h2Element = div.querySelector("h2");
+  return h2Element.textContent;
 };
