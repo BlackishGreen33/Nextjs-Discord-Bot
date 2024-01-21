@@ -12,6 +12,7 @@ export const action = async (ctx) => {
   if (ctx.commandName === "nhentai") {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
+    const img = fetchImgSrc(url + "/1/");
     // const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
@@ -35,7 +36,7 @@ export const action = async (ctx) => {
       //   value: "Some value here",
       //   inline: true,
       // })
-      .setImage(url + "/1/")
+      .setImage(img)
       .setTimestamp();
     // .setFooter({
     //   text: "Some footer text here",
@@ -65,3 +66,28 @@ export const action = async (ctx) => {
 //   const h2Element = div.querySelector("h2");
 //   return h2Element.textContent;
 // };
+
+const fetchImgSrc = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (response.ok) {
+      const htmlContent = await response.text();
+      return parseImgSrc(htmlContent);
+    } else {
+      throw new Error("error");
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+const parseImgSrc = (htmlContent) => {
+  const div = document.createElement("div");
+  div.innerHTML = htmlContent;
+  const imgElement = div.querySelector("img");
+  if (imgElement) {
+    return imgElement.getAttribute("src");
+  } else {
+    throw new Error("not found image");
+  }
+};
