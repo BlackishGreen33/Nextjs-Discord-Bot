@@ -50,7 +50,7 @@ export const action = async (ctx) => {
 
 const getImg = (url) => {
   request({ url: url, method: "GET" }, (error, response, body) => {
-    if (!error && response.statusCode === 200) {
+    if (!error && body) {
       const $ = cheerio.load(body);
       const src = $("img").attr("src");
       return src;
