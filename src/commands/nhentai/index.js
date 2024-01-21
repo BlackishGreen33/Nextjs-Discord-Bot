@@ -1,5 +1,4 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { NanaAPI } from "nana-api";
 
 export const command = new SlashCommandBuilder()
   .setName("nhentai")
@@ -14,22 +13,16 @@ export const action = async (ctx) => {
     const nana = new NanaAPI();
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const img = `https://t.nhentai.net/galleries/${number}/cover.jpg`;
-    let title = "";
-    nana.g(number).then((g) => {
-      title = g.title.japanese;
-      console.log(g);
-    });
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
-      .setTitle(title)
+      .setTitle(url)
       .setURL(url)
       // .setAuthor({
       //   name: "Some name",
       //   iconURL: "https://i.imgur.com/AfFp7pu.png",
       //   url: "https://discord.js.org",
       // })
-      .setDescription("Some description here")
+      // .setDescription("Some description here")
       // .setThumbnail("https://i.imgur.com/AfFp7pu.png")
       // .addFields(
       //   { name: "Regular field title", value: "Some value here" },
@@ -42,7 +35,7 @@ export const action = async (ctx) => {
       //   value: "Some value here",
       //   inline: true,
       // })
-      .setImage(img)
+      // .setImage(img)
       .setTimestamp();
     // .setFooter({
     //   text: "Some footer text here",
