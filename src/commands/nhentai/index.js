@@ -52,7 +52,8 @@ const getImg = (url) => {
   request(url + "/1/", (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const $ = cheerio.load(body);
-      const src = $('.content #image-container a img').attr('src');
+      const src = $(".content #image-container a img").attr("src");
+      console.log(body);
       return src;
     } else {
       console.error(error);
