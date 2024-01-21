@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import request from "request";
-import cheerio from "cheerio";
+import { API, TagTypes } from "nhentai-api";
 
 export const command = new SlashCommandBuilder()
   .setName("nhentai")
@@ -12,10 +11,13 @@ export const command = new SlashCommandBuilder()
 export const action = async (ctx) => {
   if (!ctx.isChatInputCommand()) return;
   if (ctx.commandName === "nhentai") {
+    const api = new API();
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const img = getImg(url);
-    // const title = fetchH2Text(url);
+    let img = "";
+    api.getBook(177013).then((book) => {
+      img = api.getImageURL(book.cover);
+    });
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
       .setTitle(url)
@@ -46,17 +48,4 @@ export const action = async (ctx) => {
     // });
     ctx.reply({ embeds: [embed] });
   }
-};
-
-const getImg = (url) => {
-  request(url, (error, response, body) => {
-    if (error || !body) {
-      console.error(error);
-    }
-    const $ = cheerio.load(body);
-    const src = $("img").attr("src");
-    console.log(body);
-    console.log(src);
-    return src;
-  });
 };
