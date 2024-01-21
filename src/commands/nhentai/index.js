@@ -10,7 +10,6 @@ export const command = new SlashCommandBuilder()
 export const action = async (ctx) => {
   if (!ctx.isChatInputCommand()) return;
   if (ctx.commandName === "nhentai") {
-    const nana = new NanaAPI();
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
     const embed = new EmbedBuilder()
