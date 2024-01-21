@@ -1,4 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { NanaAPI } from "nana-api";
 
 export const command = new SlashCommandBuilder()
   .setName("nhentai")
@@ -10,12 +11,18 @@ export const command = new SlashCommandBuilder()
 export const action = async (ctx) => {
   if (!ctx.isChatInputCommand()) return;
   if (ctx.commandName === "nhentai") {
+    const nana = new NanaAPI();
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
     const img = `https://t.nhentai.net/galleries/${number}/cover.jpg`;
+    let title = "";
+    nana.g(number).then((g) => {
+      title = g.title.japanese;
+      console.log(g);
+    });
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
-      .setTitle(url)
+      .setTitle(title)
       .setURL(url)
       // .setAuthor({
       //   name: "Some name",
