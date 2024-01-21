@@ -49,13 +49,13 @@ export const action = async (ctx) => {
 };
 
 const getImg = (url) => {
-  request(url, (error, response, body) => {
+  request({ url: url, method: "GET" }, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const $ = cheerio.load(body);
       const src = $("img").attr("src");
       return src;
     } else {
-      console.error("報錯："+error);
+      console.error("報錯：" + error);
     }
   });
 };
