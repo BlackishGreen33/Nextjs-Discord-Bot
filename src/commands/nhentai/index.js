@@ -14,7 +14,8 @@ export const action = async (ctx) => {
   if (ctx.commandName === "nhentai") {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
-    const img = getImg(url);
+    const body = getImg(url);
+    // const img = getImg(url);
     // const title = fetchH2Text(url);
     const embed = new EmbedBuilder()
       .setColor(0xed2553)
@@ -25,7 +26,7 @@ export const action = async (ctx) => {
       //   iconURL: "https://i.imgur.com/AfFp7pu.png",
       //   url: "https://discord.js.org",
       // })
-      .setDescription("Some description here")
+      .setDescription(body)
       // .setThumbnail("https://i.imgur.com/AfFp7pu.png")
       // .addFields(
       //   { name: "Regular field title", value: "Some value here" },
@@ -38,7 +39,7 @@ export const action = async (ctx) => {
       //   value: "Some value here",
       //   inline: true,
       // })
-      .setImage(img)
+      // .setImage(img)
       .setTimestamp();
     // .setFooter({
     //   text: "Some footer text here",
@@ -52,9 +53,8 @@ const getImg = (url) => {
   request(url + "/1/", (error, response, body) => {
     if (!error && response.statusCode === 200) {
       const $ = cheerio.load(body);
-      const src = $(".content #image-container a img").attr("src");
-      console.log(body);
-      return src;
+      // const src = $(".content #image-container a img").attr("src");
+      return body;
     } else {
       console.error(error);
     }
