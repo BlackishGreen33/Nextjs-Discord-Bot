@@ -15,7 +15,7 @@ export const action = async (ctx) => {
     const number = ctx.options.getString("num").trim();
     const url = `https://nhentai.net/g/${number}`;
     let img = "";
-    api.getBook(177013).then((book) => {
+    api.getBook(number).then((book) => {
       img = api.getImageURL(book.cover);
     });
     const embed = new EmbedBuilder()
