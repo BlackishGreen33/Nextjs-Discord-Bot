@@ -1,0 +1,13 @@
+version: 2
+enable-beta-ecosystems: true
+updates:
+  - package-ecosystem: 'bun'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    versioning-strategy: 'auto'
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    versioning-strategy: 'auto'
