@@ -22,7 +22,7 @@ const getCommands = async () => {
   for (const file of commandFiles) {
     try {
       const fileContents = (await import(
-        '../commands/' + file
+        '../../commands' + file
       )) as commandModule;
       if (fileContents) commands[file] = fileContents;
     } catch {

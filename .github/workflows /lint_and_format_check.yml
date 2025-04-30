@@ -18,20 +18,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
         with:
-          bun-version: latest
+          version: '10.10.0'
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install
 
       - name: Run Prettier
-        run: bun prettier --check .
+        run: pnpm prettier --check .
         continue-on-error: false
 
       - name: Run ESLint
-        run: bun lint
+        run: pnpm lint
         continue-on-error: false
 
       - name: Check if PR should be blocked
