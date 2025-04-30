@@ -1,103 +1,185 @@
-import Image from 'next/image';
+'use client';
 
-export default function Home() {
+import axios from 'axios';
+import { NextPage } from 'next';
+import Link from 'next/link';
+import { FormEvent, useState } from 'react';
+
+import { CLIENT_APPLICATION_ID } from '@/common/configs';
+
+const Logo = () => (
+  <svg
+    width="50"
+    height="50"
+    viewBox="0 0 1000 677"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect x="270" y="62" width="400" height="50" rx="23" fill="#5865F2" />
+    <rect x="145" y="332" width="310" height="50" rx="23" fill="#5865F2" />
+    <rect x="234" y="201" width="264" height="50" rx="23" fill="#5865F2" />
+    <rect x="55" y="201" width="148" height="50" rx="23" fill="#5865F2" />
+    <rect x="55" y="201" width="148" height="50" rx="23" fill="#5865F2" />
+    <path
+      d="M145 136C145 123.297 155.297 113 168 113H199C211.703 113 222 123.297 222 136V140C222 152.703 211.703 163 199 163H168C155.297 163 145 152.703 145 140V136Z"
+      fill="#5865F2"
+    />
+    <path
+      d="M145 136C145 123.297 155.297 113 168 113H199C211.703 113 222 123.297 222 136V140C222 152.703 211.703 163 199 163H168C155.297 163 145 152.703 145 140V136Z"
+      fill="#5865F2"
+    />
+    <circle
+      cx="639.5"
+      cy="349.5"
+      r="287.5"
+      fill="url(#paint0_linear_1247_103)"
+    />
+    <rect x="547" y="219" width="185" height="50" rx="23" fill="#F4F5FF" />
+    <rect
+      x="715.958"
+      y="210"
+      width="185"
+      height="50"
+      rx="23"
+      transform="rotate(55 715.958 210)"
+      fill="#F4F5FF"
+    />
+    <rect
+      x="456"
+      y="361.543"
+      width="185"
+      height="50"
+      rx="23"
+      transform="rotate(-55 456 361.543)"
+      fill="#F4F5FF"
+    />
+    <rect
+      x="731.069"
+      y="494.222"
+      width="185"
+      height="50"
+      rx="23"
+      transform="rotate(-180 731.069 494.222)"
+      fill="#F4F5FF"
+    />
+    <rect
+      x="562.112"
+      y="503.222"
+      width="185"
+      height="50"
+      rx="23"
+      transform="rotate(-125 562.112 503.222)"
+      fill="#F4F5FF"
+    />
+    <rect
+      x="822.069"
+      y="351.679"
+      width="185"
+      height="50"
+      rx="23"
+      transform="rotate(125 822.069 351.679)"
+      fill="#F4F5FF"
+    />
+    <path
+      d="M602.375 312.375C606.125 313.042 609.208 313.5 611.625 313.75C614.042 314 616 314.208 617.5 314.375C619.25 314.542 620.625 314.583 621.625 314.5H625.375C626.708 314.5 628.375 314.5 630.375 314.5C632.458 314.417 635.042 314.375 638.125 314.375C639.875 318.458 641.458 322.208 642.875 325.625C644.375 329.042 645.625 331.958 646.625 334.375C647.792 337.292 648.875 339.917 649.875 342.25C651.042 345.167 652.292 348.375 653.625 351.875C654.958 355.375 656.167 358.667 657.25 361.75C658.417 364.833 659.375 367.375 660.125 369.375C660.875 371.375 661.25 372.292 661.25 372.125C661.25 372.042 661.292 371.208 661.375 369.625C661.458 367.958 661.542 365.917 661.625 363.5C661.708 361 661.792 358.292 661.875 355.375C662.042 352.375 662.125 349.5 662.125 346.75C662.208 343.917 662.25 341.333 662.25 339C662.25 336.667 662.167 334.917 662 333.75C661.75 332.333 661.25 330.708 660.5 328.875C659.833 327.292 658.917 325.417 657.75 323.25C656.583 321 654.958 318.458 652.875 315.625C656.292 315.708 659.083 315.75 661.25 315.75C663.417 315.75 665.167 315.75 666.5 315.75C668 315.75 669.167 315.708 670 315.625C671.083 315.625 672.417 315.542 674 315.375C675.417 315.208 677.167 315.083 679.25 315C681.417 314.833 684.083 314.625 687.25 314.375C685.417 316.042 683.958 317.625 682.875 319.125C681.792 320.625 680.917 321.958 680.25 323.125C679.5 324.458 679 325.708 678.75 326.875C678.417 328.375 678.125 330.833 677.875 334.25C677.708 337.583 677.5 341.333 677.25 345.5C677.083 349.667 676.917 354 676.75 358.5C676.583 363 676.417 367.125 676.25 370.875C676.25 373.708 676.167 376.75 676 380C675.833 382.75 675.667 385.875 675.5 389.375C675.333 392.792 675.125 396.25 674.875 399.75L663.75 400C660.5 394.25 657.75 389.333 655.5 385.25C653.333 381.083 651.542 377.667 650.125 375C648.542 371.917 647.208 369.333 646.125 367.25C645.208 365.25 644 362.958 642.5 360.375C641.25 358.208 639.667 355.542 637.75 352.375C635.917 349.208 633.708 345.583 631.125 341.5C630.875 347.25 630.75 352.167 630.75 356.25C630.833 360.25 630.958 363.583 631.125 366.25C631.375 369.333 631.667 371.917 632 374C632.417 376 633 378.25 633.75 380.75C634.417 382.917 635.208 385.458 636.125 388.375C637.125 391.292 638.333 394.583 639.75 398.25C634.833 398 631.167 397.875 628.75 397.875H625C623.833 397.875 622.25 398 620.25 398.25C618.583 398.417 616.292 398.667 613.375 399C610.542 399.333 607 399.792 602.75 400.375C604.75 397.958 606.333 395.75 607.5 393.75C608.75 391.667 609.708 389.917 610.375 388.5C611.208 386.833 611.792 385.375 612.125 384.125C612.375 382.792 612.542 380.5 612.625 377.25C612.708 373.917 612.708 370.167 612.625 366C612.625 361.75 612.542 357.292 612.375 352.625C612.292 347.958 612.167 343.625 612 339.625C611.833 335.625 611.625 332.208 611.375 329.375C611.208 326.542 611.083 324.792 611 324.125C610.75 323.042 610.25 321.875 609.5 320.625C608.833 319.542 607.958 318.333 606.875 317C605.792 315.583 604.292 314.042 602.375 312.375Z"
+      fill="white"
+    />
+    <defs>
+      <linearGradient
+        id="paint0_linear_1247_103"
+        x1="444"
+        y1="211"
+        x2="886.5"
+        y2="506"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stopColor="#5865F2" />
+        <stop offset="1" stopColor="#EB45D0" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const HomePage: NextPage = () => {
+  const [registerCommandsKey, setRegisterCommandsKey] = useState<string>('');
+  const [status, setStatus] = useState<string>('');
+
+  const handleRegisterCommand = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const requestLink =
+      '/api/discord-bot/register-commands?REGISTER_COMMANDS_KEY=' +
+      registerCommandsKey;
+
+    try {
+      setStatus('Loading...');
+      if (registerCommandsKey.length > 0) {
+        await axios.post(requestLink);
+      }
+      setStatus('Commands registered!');
+    } catch (error) {
+      console.log((error as Error).message);
+      setStatus('Something went wrong. Check the console for errors');
+    }
+  };
+
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-[family-name:var(--font-geist-mono)] text-sm/6 sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{' '}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-[family-name:var(--font-geist-mono)] font-semibold dark:bg-white/[.06]">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main>
+      <section id="main-container">
+        <h1 id="header-text">
+          <Logo />
+          Nextjs Discord Bot
+        </h1>
+        <p>{status}</p>
+        <form id="form-container" onSubmit={handleRegisterCommand}>
+          <input
+            id="register-command-input"
+            type="text"
+            placeholder="Register Commands Key"
+            value={registerCommandsKey}
+            onChange={(e) => setRegisterCommandsKey(e.target.value)}
+          />
+          <button
+            id="register-command-btn"
+            disabled={registerCommandsKey.length < 1}
+            type="submit"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm font-medium transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:w-auto sm:px-5 sm:text-base md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Register Commands
+          </button>
+        </form>
+        <Link
+          id="invite-discord-bot-link"
+          href={`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_APPLICATION_ID}&permissions=2147483648&scope=bot`}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Invite Discord Bot
+        </Link>
+        <div id="divider"></div>
+        <Link
+          href="https://github.com/BlackishGreen33/Discord-Bot"
+          target="_blank"
+          rel="noreferrer noopener"
+          id="github-repo-link"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            x="0px"
+            y="0px"
+            width="30"
+            height="30"
+            viewBox="0 0 64 64"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            <path
+              fill="#fff"
+              d="M32 6C17.641 6 6 17.641 6 32c0 12.277 8.512 22.56 19.955 25.286-.592-.141-1.179-.299-1.755-.479V50.85c0 0-.975.325-2.275.325-3.637 0-5.148-3.245-5.525-4.875-.229-.993-.827-1.934-1.469-2.509-.767-.684-1.126-.686-1.131-.92-.01-.491.658-.471.975-.471 1.625 0 2.857 1.729 3.429 2.623 1.417 2.207 2.938 2.577 3.721 2.577.975 0 1.817-.146 2.397-.426.268-1.888 1.108-3.57 2.478-4.774-6.097-1.219-10.4-4.716-10.4-10.4 0-2.928 1.175-5.619 3.133-7.792C19.333 23.641 19 22.494 19 20.625c0-1.235.086-2.751.65-4.225 0 0 3.708.026 7.205 3.338C28.469 19.268 30.196 19 32 19s3.531.268 5.145.738c3.497-3.312 7.205-3.338 7.205-3.338.567 1.474.65 2.99.65 4.225 0 2.015-.268 3.19-.432 3.697C46.466 26.475 47.6 29.124 47.6 32c0 5.684-4.303 9.181-10.4 10.4 1.628 1.43 2.6 3.513 2.6 5.85v8.557c-.576.181-1.162.338-1.755.479C49.488 54.56 58 44.277 58 32 58 17.641 46.359 6 32 6zM33.813 57.93C33.214 57.972 32.61 58 32 58 32.61 58 33.213 57.971 33.813 57.93zM37.786 57.346c-1.164.265-2.357.451-3.575.554C35.429 57.797 36.622 57.61 37.786 57.346zM32 58c-.61 0-1.214-.028-1.813-.07C30.787 57.971 31.39 58 32 58zM29.788 57.9c-1.217-.103-2.411-.289-3.574-.554C27.378 57.61 28.571 57.797 29.788 57.9z"
+            ></path>
+          </svg>
+          Github Repository | BlackishGreen33
+        </Link>
+      </section>
+    </main>
   );
-}
+};
+
+export default HomePage;
