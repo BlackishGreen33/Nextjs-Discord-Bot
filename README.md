@@ -1,59 +1,36 @@
-<h1 align="center">Life_is_BG</h1>
-<div align="center">
-  <h3>一隻用 JavaScript 寫的 Discord 機器人</h3>
-  <a href="https://github.com/BlackishGreen33/Discord-Bot"><strong>探索專案文檔 »</strong></a>
-  <br />
-  <br />
-  
-  ![license](https://img.shields.io/github/license/BlackishGreen33/Discord-Bot)
-  ![language](https://img.shields.io/github/languages/top/BlackishGreen33/Discord-Bot)
-  ![last](https://img.shields.io/github/last-commit/BlackishGreen33/Discord-Bot)
-  
-  <a href="https://discord.com/api/oauth2/authorize?client_id=1114410481214566420&permissions=0&scope=bot" target="_blank">在線體驗</a>
-  ·
-  <a href="https://github.com/BlackishGreen33/Discord-Bot/issues">報告Bug</a>
-  ·
-  <a href="https://github.com/BlackishGreen33/Discord-Bot/issues">提出新特性</a>
-</div>
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## 🔖 專案導覽
+## Getting Started
 
-### ✨ 現有功能
+First, run the development server:
 
-- 關鍵字觸發回覆
-- 番號查詢(支援 `nHentai` 與 `紳士漫畫`)
-- 音樂播放(僅限 `無版權音樂`)
-
-### 🎯 相容環境
-
-- 現代瀏覽器（Chrome >= 64, Edge >= 79, Firefox >= 78, Safari >= 12）
-
-### 💻 本地調試
-
-下載到本地：
 ```bash
-$ git https://github.com/BlackishGreen33/Discord-Bot.git
-$ cd Discord-Bot
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-配置環境變量：
-```env
-TOKEN =
-APPLICATION_ID =
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-安裝依賴包：
-```bash
-$ yarn
-```
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-開始調試：
-```bash
-$ yarn dev
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-### 📝 授權
+## Learn More
 
-上述文件皆以 MIT 許可授權
+To learn more about Next.js, take a look at the following resources:
 
-> 詳細之授權請參考 [LICENSE](LICENSE) 文件
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
