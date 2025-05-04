@@ -1,9 +1,8 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { resolve } from 'path';
 
-import { executeCommand } from '@/common/types';
-
 import getTsFiles from './getTsFiles';
+import { executeCommand } from '../types';
 
 type commandModule = {
   execute: executeCommand;
@@ -16,13 +15,13 @@ let seenCommands: {
 
 const getCommands = async () => {
   if (seenCommands) return seenCommands;
-  const commandDir = resolve(process.cwd(), 'commands');
+  const commandDir = resolve(`${process.cwd()}/src`, 'commands');
   const commandFiles = getTsFiles(commandDir);
   const commands: { [key: string]: commandModule } = {};
   for (const file of commandFiles) {
     try {
       const fileContents = (await import(
-        '../../commands' + file
+        '@/commands/' + file
       )) as commandModule;
       if (fileContents) commands[file] = fileContents;
     } catch {

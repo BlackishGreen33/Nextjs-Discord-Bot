@@ -2,11 +2,11 @@ import { APIInteractionResponse, InteractionType } from 'discord-api-types/v10';
 import { NextResponse } from 'next/server';
 
 import { PUBLIC_KEY } from '@/common/configs';
-import { getCommands, verifyDiscordRequest } from '@/common/utils';
+import { getCommands, verifyInteractionRequest } from '@/common/utils';
 
 export async function POST(req: Request) {
   try {
-    const verifyRes = await verifyDiscordRequest(req, PUBLIC_KEY);
+    const verifyRes = await verifyInteractionRequest(req, PUBLIC_KEY);
 
     if (!verifyRes.isValid || !verifyRes.interaction) {
       return new NextResponse('Invalid request', { status: 401 });
