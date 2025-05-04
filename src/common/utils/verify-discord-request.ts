@@ -37,7 +37,7 @@ type VerifyDiscordRequestResult =
       interaction: Interaction;
     };
 
-const verifyDiscordRequest = async (
+const verifyInteractionRequest = async (
   request: Request,
   appPublicKey: string
 ): Promise<VerifyDiscordRequestResult> => {
@@ -66,4 +66,4 @@ const verifyDiscordRequest = async (
   };
 };
 
-export default verifyDiscordRequest;
+export default verifyInteractionRequest;

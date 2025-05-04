@@ -3,11 +3,11 @@
 import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import * as React from 'react';
 
 import { CLIENT_APPLICATION_ID } from '@/common/configs';
 
-const Logo = () => (
+const Logo: React.FC = () => (
   <svg
     width="50"
     height="50"
@@ -101,10 +101,11 @@ const Logo = () => (
 );
 
 const HomePage: NextPage = () => {
-  const [registerCommandsKey, setRegisterCommandsKey] = useState<string>('');
-  const [status, setStatus] = useState<string>('');
+  const [registerCommandsKey, setRegisterCommandsKey] =
+    React.useState<string>('');
+  const [status, setStatus] = React.useState<string>('');
 
-  const handleRegisterCommand = async (e: FormEvent<HTMLFormElement>) => {
+  const handleRegisterCommand = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const requestLink =
@@ -155,6 +156,7 @@ const HomePage: NextPage = () => {
         >
           Invite Discord Bot
         </Link>
+
         <div id="divider"></div>
         <Link
           href="https://github.com/BlackishGreen33/Discord-Bot"
