@@ -13,16 +13,12 @@ export async function POST(req: Request) {
     }
     const { interaction } = verifyRes;
 
-    // Check if the interaction type is a ping
-    // PING message, respond with ACK (part of Discord's security and authorization protocol)
     if (interaction.type === InteractionType.Ping) {
       return NextResponse.json({ type: 1 });
     }
 
-    // get all commands
     const allCommands = await getCommands();
 
-    // execute command
     let reply: APIInteractionResponse | null = null;
     const commandName = interaction.data.name + '.ts';
     if (allCommands[commandName]) {
