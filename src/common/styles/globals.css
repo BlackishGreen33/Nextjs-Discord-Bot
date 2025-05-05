@@ -1,143 +1,15 @@
 @import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-/* body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-} */
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
 body {
   background-color: hsl(262, 66%, 33%);
   color: white;
 }
 
-main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 6rem;
-  min-height: 100vh;
-}
-
-a {
-  text-decoration: none;
-}
-
-#header-text {
-  display: flex;
-  gap: 0.5em;
-  align-items: center;
-  padding: 0.5em 1em;
-  font-weight: bold;
-  background: none;
-}
-
-#main-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #18181b;
-  padding: 2em 4em;
-  border-radius: 2px;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.2);
-}
-
-#github-repo-link {
-  display: flex;
-  gap: 0.5em;
-  align-items: center;
-  padding: 0.5em 1em;
-  font-weight: bold;
-  background: none;
-  cursor: pointer;
-  color: white;
-  background-color: #29292e;
-  border-radius: 0.125em;
-}
-
-#github-repo-link:hover {
-  background-color: #333;
-}
-
-#form-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 1em;
-}
-
-#register-command-input {
-  padding: 1em;
-  outline: none;
-  background-color: #333;
-  outline: none;
-  border: none;
-  color: white;
-  border-radius: 0.125em;
-}
-
-#register-command-btn {
-  padding: 1em;
-  font-weight: bold;
-  background: none;
-  cursor: pointer;
-  color: white;
-  background-color: #5b64f1;
-  outline: none;
-  border: none;
-  border-radius: 0.125em;
-  margin-bottom: 20px;
-}
-
-#register-commands-btn:hover {
-  background-color: #6871ed;
-}
-
 #invite-discord-bot-link {
-  padding: 1.5em;
-  font-weight: bold;
-  background: none;
-  cursor: pointer;
-  color: white;
-  width: 226px;
   text-align: center;
-  border-radius: 0.125em;
   background: linear-gradient(90deg, #5a64f1, #df47d2);
-  text-decoration: none;
 }
 
 #invite-discord-bot-link:hover {
   background: linear-gradient(90deg, #6871ed, #ea5cde);
-}
-
-#divider {
-  width: 70%;
-  height: 1px;
-  background-color: #333;
-  margin: 1em 0;
 }
