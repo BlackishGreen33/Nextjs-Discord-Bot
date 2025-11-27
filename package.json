@@ -15,7 +15,7 @@
     "axios": "^1.13.2",
     "discord-interactions": "^4.4.0",
     "discord.js": "^14.25.1",
-    "next": "16.0.3",
+    "next": "16.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tweetnacl": "^1.0.3"
