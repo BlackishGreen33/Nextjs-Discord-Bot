@@ -7,10 +7,12 @@ export const register = new SlashCommandBuilder()
   .setDescription("pong's you back! (bot check)");
 
 export const execute: executeCommand = async (interaction) => {
-  const msgCreatedTimestamp = new Date(
-    interaction.message?.timestamp ?? Date.now()
-  ).getTime();
-  const latency = msgCreatedTimestamp ? Date.now() - msgCreatedTimestamp : 0;
+  const DISCORD_EPOCH = BigInt('1420070400000');
+  const interactionId = BigInt(interaction.id);
+  const interactionTimestamp = Number(
+    (interactionId >> BigInt(22)) + DISCORD_EPOCH
+  );
+  const latency = Math.max(0, Date.now() - interactionTimestamp);
 
   return {
     type: 4,
