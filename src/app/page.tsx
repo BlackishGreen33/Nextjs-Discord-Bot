@@ -25,8 +25,7 @@ const HomePage: NextPage = () => {
         await axios.post(requestLink);
       }
       setStatus('Commands registered!');
-    } catch (error) {
-      console.log((error as Error).message);
+    } catch {
       setStatus('Something went wrong. Check the console for errors');
     }
   };
@@ -59,7 +58,7 @@ const HomePage: NextPage = () => {
         </form>
         <Link
           id="invite-discord-bot-link"
-          className='p-6 font-bold bg-none cursor-pointer text-white w-3/5 rounded-lg'
+          className="w-3/5 cursor-pointer rounded-lg bg-none p-6 font-bold text-white"
           href={`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_APPLICATION_ID}&permissions=2147483648&scope=bot`}
           target="_blank"
           rel="noreferrer noopener"
@@ -71,7 +70,7 @@ const HomePage: NextPage = () => {
           href="https://github.com/BlackishGreen33/Discord-Bot"
           target="_blank"
           rel="noreferrer noopener"
-          className='flex gap-2 items-center p-2 font-bold bg-none cursor-pointer text-white bg-gray-800 rounded-lg hover:bg-gray-700'
+          className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-800 bg-none p-2 font-bold text-white hover:bg-gray-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

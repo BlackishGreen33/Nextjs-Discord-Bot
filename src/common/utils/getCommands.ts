@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { resolve } from 'path';
 
-import getTsFiles from './getTsFiles';
 import { executeCommand } from '../types';
+import getTsFiles from './getTsFiles';
 
 type commandModule = {
   execute: executeCommand;

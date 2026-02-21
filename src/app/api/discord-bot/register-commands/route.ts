@@ -13,18 +13,13 @@ export async function POST(req: Request) {
       (command) => command.register.toJSON()
     );
 
-    const registerCommands = await discord_api.put(
+    await discord_api.put(
       `/applications/${process.env.NEXT_PUBLIC_APPLICATION_ID!}/commands`,
       arrayOfSlashCommandsRegisterJSON
     );
 
-    console.log('== COMMANDS REGISTERED ===');
-    console.log(registerCommands.data);
-    console.log('== COMMANDS REGISTERED ===');
-
     return NextResponse.json({ error: null });
-  } catch (error) {
-    console.error(error);
+  } catch {
     return NextResponse.json({ error: 'Error Occured' }, { status: 500 });
   }
 }

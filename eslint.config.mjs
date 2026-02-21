@@ -1,29 +1,13 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import eslintPluginJs from '@eslint/js';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: eslintPluginJs.configs.recommended,
-  allConfig: eslintPluginJs.configs.all,
-});
 
 const eslintConfig = [
-  ...compat.config({
-    env: {
-      browser: true,
-      es2024: true,
-      node: true,
-    },
-  }),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
+    files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       globals: {
         React: 'readonly',
@@ -35,7 +19,6 @@ const eslintConfig = [
       },
     },
     plugins: {
-      '@typescript-eslint': typescriptEslint,
       'simple-import-sort': eslintPluginSimpleImportSort,
       'unused-imports': unusedImports,
     },
@@ -89,13 +72,6 @@ const eslintConfig = [
       ],
     },
   },
-  ...compat.extends(
-    'next/core-web-vitals',
-    'next/typescript',
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier'
-  ),
 ];
 
 export default eslintConfig;

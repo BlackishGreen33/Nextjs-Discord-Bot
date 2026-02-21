@@ -27,9 +27,7 @@ export async function POST(req: Request) {
 
     if (!reply) throw new Error();
     return NextResponse.json(reply);
-  } catch (error) {
-    console.log(error);
-    console.log('SOMETHING WENT WRONG');
+  } catch {
     return NextResponse.error();
   }
 }
