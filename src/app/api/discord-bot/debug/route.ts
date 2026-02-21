@@ -61,6 +61,49 @@ export async function GET(req: Request) {
     };
   }
 
+  let applicationCheck: {
+    ok: boolean;
+    status: number | null;
+    appIdFromDiscord: string | null;
+    verifyKeyMatches: boolean | null;
+    error: string | null;
+  } = {
+    ok: false,
+    status: null,
+    appIdFromDiscord: null,
+    verifyKeyMatches: null,
+    error: null,
+  };
+
+  try {
+    const res = await discord_api.get('/oauth2/applications/@me');
+    const data = res.data as {
+      id?: string;
+      verify_key?: string;
+    };
+    applicationCheck = {
+      ok: true,
+      status: res.status,
+      appIdFromDiscord: data.id ?? null,
+      verifyKeyMatches: data.verify_key
+        ? data.verify_key === process.env.PUBLIC_KEY
+        : null,
+      error: null,
+    };
+  } catch (error) {
+    const maybeError = error as {
+      response?: { status?: number };
+      message?: string;
+    };
+    applicationCheck = {
+      ok: false,
+      status: maybeError.response?.status ?? null,
+      appIdFromDiscord: null,
+      verifyKeyMatches: null,
+      error: maybeError.message ?? 'Unknown error',
+    };
+  }
+
   return NextResponse.json({
     ok: true,
     runtime: {
@@ -76,5 +119,6 @@ export async function GET(req: Request) {
     },
     localCommandNames,
     discordApiCheck,
+    applicationCheck,
   });
 }
