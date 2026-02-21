@@ -59,7 +59,7 @@ const HomePage: NextPage = () => {
         <Link
           id="invite-discord-bot-link"
           className="w-3/5 cursor-pointer rounded-lg bg-none p-6 font-bold text-white"
-          href={`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_APPLICATION_ID}&permissions=2147483648&scope=bot`}
+          href={`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_APPLICATION_ID}&permissions=2147483648&scope=bot%20applications.commands`}
           target="_blank"
           rel="noreferrer noopener"
         >

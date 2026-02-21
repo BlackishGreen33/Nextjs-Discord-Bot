@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const allCommands = await getCommands();
 
     let reply: APIInteractionResponse | null = null;
-    const commandName = interaction.data.name + '.ts';
+    const commandName = interaction.data.name;
     if (allCommands[commandName]) {
       reply = await allCommands[commandName].execute(interaction);
     }
