@@ -4,9 +4,13 @@ import { REGISTER_COMMANDS_KEY } from '@/common/configs';
 import { discord_api, getCommands } from '@/common/utils';
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_WINDOW_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
 const RATE_LIMIT_MAX_REQUESTS = 5;
+const RATE_LIMIT_KEY_PREFIX = 'register_commands_rate_limit';
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_REDIS_AUTH_HEADER = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 const getClientIp = (req: Request) => {
   const forwardedFor = req.headers.get('x-forwarded-for');
@@ -17,7 +21,7 @@ const getClientIp = (req: Request) => {
   return req.headers.get('x-real-ip') ?? 'unknown';
 };
 
-const isRateLimited = (clientIp: string) => {
+const isRateLimitedInMemory = (clientIp: string) => {
   const now = Date.now();
   const existing = rateLimitStore.get(clientIp);
 
@@ -38,9 +42,54 @@ const isRateLimited = (clientIp: string) => {
   return false;
 };
 
+const runUpstashCommand = async (
+  command: string,
+  key: string,
+  value?: number
+) => {
+  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_AUTH_HEADER) return null;
+
+  const encodedKey = encodeURIComponent(key);
+  const encodedValue = value !== undefined ? `/${value}` : '';
+  const response = await fetch(
+    `${UPSTASH_REDIS_REST_URL}/${command}/${encodedKey}${encodedValue}`,
+    {
+      headers: {
+        Authorization: `Bearer ${UPSTASH_REDIS_AUTH_HEADER}`,
+      },
+      method: 'POST',
+    }
+  );
+
+  if (!response.ok) return null;
+
+  const data = (await response.json()) as { result?: number | string };
+  if (data.result === undefined) return null;
+
+  return Number(data.result);
+};
+
+const isRateLimited = async (clientIp: string) => {
+  const key = `${RATE_LIMIT_KEY_PREFIX}:${clientIp}`;
+
+  try {
+    const currentCount = await runUpstashCommand('incr', key);
+    if (currentCount !== null) {
+      if (currentCount === 1) {
+        await runUpstashCommand('expire', key, RATE_LIMIT_WINDOW_SECONDS);
+      }
+      return currentCount > RATE_LIMIT_MAX_REQUESTS;
+    }
+  } catch {
+    // Fallback to in-memory limiter when Redis is unreachable.
+  }
+
+  return isRateLimitedInMemory(clientIp);
+};
+
 export async function POST(req: Request) {
   const clientIp = getClientIp(req);
-  if (isRateLimited(clientIp)) {
+  if (await isRateLimited(clientIp)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
