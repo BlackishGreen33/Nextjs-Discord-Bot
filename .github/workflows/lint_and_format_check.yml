@@ -38,6 +38,10 @@ jobs:
         run: pnpm lint
         continue-on-error: false
 
+      - name: Run tests
+        run: pnpm test
+        continue-on-error: false
+
       - name: Check if PR should be blocked
         if: github.event_name == 'pull_request'
         run: |
