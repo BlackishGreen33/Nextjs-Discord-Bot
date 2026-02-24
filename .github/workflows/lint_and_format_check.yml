@@ -26,6 +26,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Run TypeScript typecheck
+        run: pnpm typecheck
+        continue-on-error: false
+
       - name: Run Prettier
         run: pnpm prettier --check .
         continue-on-error: false
