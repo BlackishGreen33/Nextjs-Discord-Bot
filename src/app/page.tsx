@@ -7,26 +7,16 @@ import * as React from 'react';
 
 const HomePage: NextPage = () => {
   const clientApplicationId = process.env.NEXT_PUBLIC_APPLICATION_ID ?? '';
-  const [registerCommandsKey, setRegisterCommandsKey] =
-    React.useState<string>('');
+  const isProduction = process.env.NODE_ENV === 'production';
   const [status, setStatus] = React.useState<string>('');
 
   const handleRegisterCommand = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isProduction) return;
 
     try {
       setStatus('Loading...');
-      if (registerCommandsKey.length > 0) {
-        await axios.post(
-          '/api/discord-bot/register-commands',
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${registerCommandsKey}`,
-            },
-          }
-        );
-      }
+      await axios.post('/api/discord-bot/register-commands');
       setStatus('Commands registered!');
     } catch {
       setStatus('Something went wrong. Check the console for errors');
@@ -40,25 +30,23 @@ const HomePage: NextPage = () => {
           Nextjs Discord Bot
         </h1>
         <p>{status}</p>
-        <form
-          className="flex w-4/5 flex-col gap-3 p-2"
-          onSubmit={handleRegisterCommand}
-        >
-          <input
-            className="rounded-lg border-0 bg-gray-800 p-4 text-white outline-0"
-            type="text"
-            placeholder="Register Commands Key"
-            value={registerCommandsKey}
-            onChange={(e) => setRegisterCommandsKey(e.target.value)}
-          />
-          <button
-            className="mb-5 cursor-pointer rounded-lg border-0 bg-indigo-500 bg-none p-4 font-bold text-white outline-0 hover:bg-indigo-600"
-            disabled={registerCommandsKey.length < 1}
-            type="submit"
+        {!isProduction ? (
+          <form
+            className="flex w-4/5 flex-col gap-3 p-2"
+            onSubmit={handleRegisterCommand}
           >
-            Register Commands
-          </button>
-        </form>
+            <button
+              className="mb-5 cursor-pointer rounded-lg border-0 bg-indigo-500 bg-none p-4 font-bold text-white outline-0 hover:bg-indigo-600"
+              type="submit"
+            >
+              Register Commands
+            </button>
+          </form>
+        ) : (
+          <p className="mb-5 rounded-lg bg-gray-800 p-4 text-sm text-gray-200">
+            Command registration is server-managed in production.
+          </p>
+        )}
         <Link
           id="invite-discord-bot-link"
           className="w-3/5 cursor-pointer rounded-lg bg-none p-6 font-bold text-white"

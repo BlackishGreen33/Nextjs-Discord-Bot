@@ -44,15 +44,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
-  const authorization = req.headers.get('authorization');
-  const bearerPrefix = 'Bearer ';
-  const requestKey =
-    authorization && authorization.startsWith(bearerPrefix)
-      ? authorization.slice(bearerPrefix.length)
-      : null;
+  if (process.env.NODE_ENV === 'production') {
+    const authorization = req.headers.get('authorization');
+    const bearerPrefix = 'Bearer ';
+    const requestKey =
+      authorization && authorization.startsWith(bearerPrefix)
+        ? authorization.slice(bearerPrefix.length)
+        : null;
 
-  if (!requestKey || requestKey !== REGISTER_COMMANDS_KEY) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!requestKey || requestKey !== REGISTER_COMMANDS_KEY) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   try {
