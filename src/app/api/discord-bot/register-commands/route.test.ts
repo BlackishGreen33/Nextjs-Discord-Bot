@@ -85,6 +85,7 @@ describe('POST /api/discord-bot/register-commands', () => {
     expect(await limitedResponse.json()).toEqual({
       error: 'Too many requests',
     });
+    expect(limitedResponse.headers.get('Retry-After')).toBe('60');
   });
 
   it('returns 429 from redis-backed limiter when count exceeds threshold', async () => {
@@ -99,6 +100,7 @@ describe('POST /api/discord-bot/register-commands', () => {
 
     expect(response.status).toBe(429);
     expect(await response.json()).toEqual({ error: 'Too many requests' });
+    expect(response.headers.get('Retry-After')).toBe('60');
     expect(global.fetch).toHaveBeenCalledWith(
       'https://redis.test/incr/register_commands_rate_limit%3A4.4.4.4',
       expect.objectContaining({
@@ -130,6 +132,7 @@ describe('POST /api/discord-bot/register-commands', () => {
     expect(await limitedResponse.json()).toEqual({
       error: 'Too many requests',
     });
+    expect(limitedResponse.headers.get('Retry-After')).toBe('60');
   });
 
   it('registers commands successfully when request is allowed', async () => {

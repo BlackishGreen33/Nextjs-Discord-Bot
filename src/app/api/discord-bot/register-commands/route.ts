@@ -90,7 +90,15 @@ const isRateLimited = async (clientIp: string) => {
 export async function POST(req: Request) {
   const clientIp = getClientIp(req);
   if (await isRateLimited(clientIp)) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        headers: {
+          'Retry-After': String(RATE_LIMIT_WINDOW_SECONDS),
+        },
+        status: 429,
+      }
+    );
   }
 
   if (process.env.NODE_ENV === 'production') {
