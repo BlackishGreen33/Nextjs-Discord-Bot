@@ -70,4 +70,31 @@ describe('POST /api/discord-bot/interactions', () => {
     expect(body.data.flags).toBe(64);
     expect(body.data.content).toContain('/missing-command');
   });
+
+  it('returns an ephemeral error when command execution throws', async () => {
+    verifyInteractionRequestMock.mockResolvedValue({
+      interaction: {
+        data: { name: 'boom' },
+        id: '123',
+        type: InteractionType.ApplicationCommand,
+      },
+      isValid: true,
+    });
+    getCommandsMock.mockResolvedValue({
+      boom: {
+        execute: vi.fn().mockRejectedValue(new Error('fail')),
+      },
+    });
+
+    const response = await POST(buildRequest());
+    const body = (await response.json()) as {
+      data: { content: string; flags: number };
+      type: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.type).toBe(4);
+    expect(body.data.flags).toBe(64);
+    expect(body.data.content).toBe('Command failed. Please try again later.');
+  });
 });
