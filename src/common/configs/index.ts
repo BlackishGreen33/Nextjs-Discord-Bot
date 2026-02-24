@@ -1,3 +1,5 @@
+import 'server-only';
+
 if (!process.env.NEXT_PUBLIC_APPLICATION_ID)
   throw new Error('APPLICATION_ID is not set');
 if (!process.env.BOT_TOKEN) throw new Error('BOT_TOKEN is not set');

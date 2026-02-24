@@ -4,9 +4,18 @@ import { REGISTER_COMMANDS_KEY } from '@/common/configs';
 import { discord_api, getCommands } from '@/common/utils';
 
 export async function POST(req: Request) {
+  const authorization = req.headers.get('authorization');
+  const bearerPrefix = 'Bearer ';
+  const requestKey =
+    authorization && authorization.startsWith(bearerPrefix)
+      ? authorization.slice(bearerPrefix.length)
+      : null;
+
+  if (!requestKey || requestKey !== REGISTER_COMMANDS_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    if (!req.url.endsWith(REGISTER_COMMANDS_KEY))
-      throw new Error('Register commands key was invalid!');
     const allCommands = await getCommands();
     const arrayOfSlashCommandsRegister = Object.values(allCommands);
     const arrayOfSlashCommandsRegisterJSON = arrayOfSlashCommandsRegister.map(
@@ -20,6 +29,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: null });
   } catch {
-    return NextResponse.json({ error: 'Error Occured' }, { status: 500 });
+    return NextResponse.json({ error: 'Error occurred' }, { status: 500 });
   }
 }

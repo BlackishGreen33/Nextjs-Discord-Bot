@@ -5,9 +5,8 @@ import { NextPage } from 'next';
 import Link from 'next/link';
 import * as React from 'react';
 
-import { CLIENT_APPLICATION_ID } from '@/common/configs';
-
 const HomePage: NextPage = () => {
+  const clientApplicationId = process.env.NEXT_PUBLIC_APPLICATION_ID ?? '';
   const [registerCommandsKey, setRegisterCommandsKey] =
     React.useState<string>('');
   const [status, setStatus] = React.useState<string>('');
@@ -15,14 +14,18 @@ const HomePage: NextPage = () => {
   const handleRegisterCommand = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const requestLink =
-      '/api/discord-bot/register-commands?REGISTER_COMMANDS_KEY=' +
-      registerCommandsKey;
-
     try {
       setStatus('Loading...');
       if (registerCommandsKey.length > 0) {
-        await axios.post(requestLink);
+        await axios.post(
+          '/api/discord-bot/register-commands',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${registerCommandsKey}`,
+            },
+          }
+        );
       }
       setStatus('Commands registered!');
     } catch {
@@ -59,7 +62,7 @@ const HomePage: NextPage = () => {
         <Link
           id="invite-discord-bot-link"
           className="w-3/5 cursor-pointer rounded-lg bg-none p-6 font-bold text-white"
-          href={`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_APPLICATION_ID}&permissions=2147483648&scope=bot%20applications.commands`}
+          href={`https://discord.com/api/oauth2/authorize?client_id=${clientApplicationId}&permissions=2147483648&scope=bot%20applications.commands`}
           target="_blank"
           rel="noreferrer noopener"
         >
