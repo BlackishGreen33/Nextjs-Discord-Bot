@@ -1,6 +1,5 @@
 'use client';
 
-import axios from 'axios';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import * as React from 'react';
@@ -16,7 +15,12 @@ const HomePage: NextPage = () => {
 
     try {
       setStatus('Loading...');
-      await axios.post('/api/discord-bot/register-commands');
+      const response = await fetch('/api/discord-bot/register-commands', {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to register commands');
+      }
       setStatus('Commands registered!');
     } catch {
       setStatus('Something went wrong. Check the console for errors');
