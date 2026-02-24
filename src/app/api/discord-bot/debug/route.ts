@@ -54,12 +54,12 @@ export async function GET(req: Request) {
     };
   } catch (error) {
     const maybeError = error as {
-      response?: { status?: number };
+      status?: number;
       message?: string;
     };
     discordApiCheck = {
       ok: false,
-      status: maybeError.response?.status ?? null,
+      status: maybeError.status ?? null,
       registeredCommandCount: null,
       error: maybeError.message ?? 'Unknown error',
     };
@@ -96,12 +96,12 @@ export async function GET(req: Request) {
     };
   } catch (error) {
     const maybeError = error as {
-      response?: { status?: number };
+      status?: number;
       message?: string;
     };
     applicationCheck = {
       ok: false,
-      status: maybeError.response?.status ?? null,
+      status: maybeError.status ?? null,
       appIdFromDiscord: null,
       verifyKeyMatches: null,
       error: maybeError.message ?? 'Unknown error',
