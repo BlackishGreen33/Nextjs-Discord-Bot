@@ -21,6 +21,21 @@ const getClientIp = (req: Request) => {
   return req.headers.get('x-real-ip') ?? 'unknown';
 };
 
+const getRequestId = (req: Request) =>
+  req.headers.get('x-request-id') ?? crypto.randomUUID();
+
+const auditLog = (
+  event: string,
+  payload: { ip: string; requestId: string; [key: string]: unknown }
+) => {
+  process.stdout.write(
+    `[register-commands] ${event} ${JSON.stringify({
+      ts: new Date().toISOString(),
+      ...payload,
+    })}\n`
+  );
+};
+
 const isRateLimitedInMemory = (clientIp: string) => {
   const now = Date.now();
   const existing = rateLimitStore.get(clientIp);
@@ -89,7 +104,11 @@ const isRateLimited = async (clientIp: string) => {
 
 export async function POST(req: Request) {
   const clientIp = getClientIp(req);
+  const requestId = getRequestId(req);
+  auditLog('request_received', { ip: clientIp, requestId });
+
   if (await isRateLimited(clientIp)) {
+    auditLog('rate_limited', { ip: clientIp, requestId });
     return NextResponse.json(
       { error: 'Too many requests' },
       {
@@ -110,6 +129,7 @@ export async function POST(req: Request) {
         : null;
 
     if (!requestKey || requestKey !== REGISTER_COMMANDS_KEY) {
+      auditLog('unauthorized', { ip: clientIp, requestId });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
@@ -126,8 +146,14 @@ export async function POST(req: Request) {
       arrayOfSlashCommandsRegisterJSON
     );
 
+    auditLog('registered', {
+      commandCount: arrayOfSlashCommandsRegisterJSON.length,
+      ip: clientIp,
+      requestId,
+    });
     return NextResponse.json({ error: null });
   } catch {
+    auditLog('register_failed', { ip: clientIp, requestId });
     return NextResponse.json({ error: 'Error occurred' }, { status: 500 });
   }
 }

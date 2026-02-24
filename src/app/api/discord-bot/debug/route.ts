@@ -9,8 +9,37 @@ const mask = (value: string | undefined) => {
   return `${value.slice(0, 4)}...${value.slice(-4)}`;
 };
 
+const getClientIp = (req: Request) => {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    const firstIp = forwardedFor.split(',')[0]?.trim();
+    if (firstIp) return firstIp;
+  }
+  return req.headers.get('x-real-ip') ?? 'unknown';
+};
+
+const getRequestId = (req: Request) =>
+  req.headers.get('x-request-id') ?? crypto.randomUUID();
+
+const auditLog = (
+  event: string,
+  payload: { ip: string; requestId: string; [key: string]: unknown }
+) => {
+  process.stdout.write(
+    `[debug-endpoint] ${event} ${JSON.stringify({
+      ts: new Date().toISOString(),
+      ...payload,
+    })}\n`
+  );
+};
+
 export async function GET(req: Request) {
+  const ip = getClientIp(req);
+  const requestId = getRequestId(req);
+  auditLog('request_received', { ip, requestId });
+
   if (process.env.NODE_ENV === 'production') {
+    auditLog('blocked_in_production', { ip, requestId });
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
@@ -18,6 +47,7 @@ export async function GET(req: Request) {
   const key = searchParams.get('REGISTER_COMMANDS_KEY');
 
   if (!key || key !== REGISTER_COMMANDS_KEY) {
+    auditLog('unauthorized', { ip, requestId });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -63,6 +93,11 @@ export async function GET(req: Request) {
       registeredCommandCount: null,
       error: maybeError.message ?? 'Unknown error',
     };
+    auditLog('commands_check_failed', {
+      ip,
+      requestId,
+      status: maybeError.status ?? null,
+    });
   }
 
   let applicationCheck: {
@@ -106,8 +141,19 @@ export async function GET(req: Request) {
       verifyKeyMatches: null,
       error: maybeError.message ?? 'Unknown error',
     };
+    auditLog('application_check_failed', {
+      ip,
+      requestId,
+      status: maybeError.status ?? null,
+    });
   }
 
+  auditLog('success', {
+    appCheckOk: applicationCheck.ok,
+    commandCheckOk: discordApiCheck.ok,
+    ip,
+    requestId,
+  });
   return NextResponse.json({
     ok: true,
     runtime: {
