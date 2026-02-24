@@ -44,8 +44,11 @@ describe('POST /api/discord-bot/register-commands', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
     mutableEnv.NODE_ENV = 'test';
     mutableEnv.NEXT_PUBLIC_APPLICATION_ID = 'app-id-123';
+    mutableEnv.UPSTASH_REDIS_REST_URL = undefined;
+    mutableEnv.UPSTASH_REDIS_REST_TOKEN = undefined;
     getCommandsMock.mockResolvedValue({
       ping: {
         register: {
@@ -71,6 +74,51 @@ describe('POST /api/discord-bot/register-commands', () => {
   it('returns 429 when same ip exceeds rate limit window', async () => {
     const POST = await importRoute();
     const request = buildRequest({ forwardedFor: '2.2.2.2' });
+
+    for (let i = 0; i < 5; i += 1) {
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+    }
+
+    const limitedResponse = await POST(request);
+    expect(limitedResponse.status).toBe(429);
+    expect(await limitedResponse.json()).toEqual({
+      error: 'Too many requests',
+    });
+  });
+
+  it('returns 429 from redis-backed limiter when count exceeds threshold', async () => {
+    mutableEnv.UPSTASH_REDIS_REST_URL = 'https://redis.test';
+    mutableEnv.UPSTASH_REDIS_REST_TOKEN = 'token-value';
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ result: 6 }), { status: 200 })
+    );
+
+    const POST = await importRoute();
+    const response = await POST(buildRequest({ forwardedFor: '4.4.4.4' }));
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({ error: 'Too many requests' });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://redis.test/incr/register_commands_rate_limit%3A4.4.4.4',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer token-value',
+        }),
+        method: 'POST',
+      })
+    );
+    expect(getCommandsMock).not.toHaveBeenCalled();
+    expect(putMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to in-memory limiter when redis call fails', async () => {
+    mutableEnv.UPSTASH_REDIS_REST_URL = 'https://redis.test';
+    mutableEnv.UPSTASH_REDIS_REST_TOKEN = 'token-value';
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('redis unavailable'));
+
+    const POST = await importRoute();
+    const request = buildRequest({ forwardedFor: '5.5.5.5' });
 
     for (let i = 0; i < 5; i += 1) {
       const response = await POST(request);
