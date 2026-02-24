@@ -10,6 +10,10 @@ const mask = (value: string | undefined) => {
 };
 
 export async function GET(req: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const { searchParams } = new URL(req.url);
   const key = searchParams.get('REGISTER_COMMANDS_KEY');
 
