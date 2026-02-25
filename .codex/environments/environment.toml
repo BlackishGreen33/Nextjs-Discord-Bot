@@ -3,12 +3,9 @@ version = 1
 name = "Nextjs-Discord-Bot"
 
 [setup]
-script = ""
+script = "pnpm install"
 
 [[actions]]
 name = "Run"
 icon = "run"
-command = '''
-pnpm install
-pnpm run dev
-'''
+command = "pnpm run dev"
