@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { REGISTER_COMMANDS_KEY } from '@/common/configs';
 import {
+  createRequestLogger,
   discord_api,
   extractBearerToken,
   getCommands,
@@ -16,30 +17,6 @@ const RATE_LIMIT_KEY_PREFIX = 'register_commands_rate_limit';
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_REDIS_AUTH_HEADER = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-const getClientIp = (req: Request) => {
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    const firstIp = forwardedFor.split(',')[0]?.trim();
-    if (firstIp) return firstIp;
-  }
-  return req.headers.get('x-real-ip') ?? 'unknown';
-};
-
-const getRequestId = (req: Request) =>
-  req.headers.get('x-request-id') ?? crypto.randomUUID();
-
-const auditLog = (
-  event: string,
-  payload: { ip: string; requestId: string; [key: string]: unknown }
-) => {
-  process.stdout.write(
-    `[register-commands] ${event} ${JSON.stringify({
-      ts: new Date().toISOString(),
-      ...payload,
-    })}\n`
-  );
-};
 
 const isRateLimitedInMemory = (clientIp: string) => {
   const now = Date.now();
@@ -108,12 +85,11 @@ const isRateLimited = async (clientIp: string) => {
 };
 
 export async function POST(req: Request) {
-  const clientIp = getClientIp(req);
-  const requestId = getRequestId(req);
-  auditLog('request_received', { ip: clientIp, requestId });
+  const { ip: clientIp, log } = createRequestLogger('register-commands', req);
+  log('request_received');
 
   if (await isRateLimited(clientIp)) {
-    auditLog('rate_limited', { ip: clientIp, requestId });
+    log('rate_limited', { status: 429 });
     return NextResponse.json(
       { error: 'Too many requests' },
       {
@@ -129,7 +105,7 @@ export async function POST(req: Request) {
     const requestKey = extractBearerToken(req.headers.get('authorization'));
 
     if (!timingSafeEqualString(REGISTER_COMMANDS_KEY, requestKey)) {
-      auditLog('unauthorized', { ip: clientIp, requestId });
+      log('unauthorized', { status: 401 });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
@@ -146,14 +122,21 @@ export async function POST(req: Request) {
       arrayOfSlashCommandsRegisterJSON
     );
 
-    auditLog('registered', {
+    log('registered', {
       commandCount: arrayOfSlashCommandsRegisterJSON.length,
-      ip: clientIp,
-      requestId,
+      status: 200,
     });
     return NextResponse.json({ error: null });
-  } catch {
-    auditLog('register_failed', { ip: clientIp, requestId });
-    return NextResponse.json({ error: 'Error occurred' }, { status: 500 });
+  } catch (error) {
+    const maybeError = error as { message?: string; status?: number };
+    log('register_failed', {
+      discordStatus: maybeError.status ?? null,
+      message: maybeError.message ?? 'Unknown error',
+      status: 500,
+    });
+    return NextResponse.json(
+      { discordStatus: maybeError.status ?? null, error: 'Error occurred' },
+      { status: 500 }
+    );
   }
 }

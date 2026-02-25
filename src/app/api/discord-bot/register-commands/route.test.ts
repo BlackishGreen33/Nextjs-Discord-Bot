@@ -8,6 +8,11 @@ vi.mock('@/common/configs', () => ({
 }));
 
 vi.mock('@/common/utils', () => ({
+  createRequestLogger: (_route: string, req: Request) => ({
+    ip: req.headers.get('x-forwarded-for') ?? '127.0.0.1',
+    log: vi.fn(),
+    requestId: 'req-id',
+  }),
   discord_api: {
     put: (...args: unknown[]) => putMock(...args),
   },

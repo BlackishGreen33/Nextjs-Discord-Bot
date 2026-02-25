@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { REGISTER_COMMANDS_KEY } from '@/common/configs';
 import {
+  createRequestLogger,
   discord_api,
   extractBearerToken,
   getCommands,
@@ -14,44 +15,19 @@ const mask = (value: string | undefined) => {
   return `${value.slice(0, 4)}...${value.slice(-4)}`;
 };
 
-const getClientIp = (req: Request) => {
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    const firstIp = forwardedFor.split(',')[0]?.trim();
-    if (firstIp) return firstIp;
-  }
-  return req.headers.get('x-real-ip') ?? 'unknown';
-};
-
-const getRequestId = (req: Request) =>
-  req.headers.get('x-request-id') ?? crypto.randomUUID();
-
-const auditLog = (
-  event: string,
-  payload: { ip: string; requestId: string; [key: string]: unknown }
-) => {
-  process.stdout.write(
-    `[debug-endpoint] ${event} ${JSON.stringify({
-      ts: new Date().toISOString(),
-      ...payload,
-    })}\n`
-  );
-};
-
 export async function GET(req: Request) {
-  const ip = getClientIp(req);
-  const requestId = getRequestId(req);
-  auditLog('request_received', { ip, requestId });
+  const { log } = createRequestLogger('debug-endpoint', req);
+  log('request_received');
 
   if (process.env.NODE_ENV === 'production') {
-    auditLog('blocked_in_production', { ip, requestId });
+    log('blocked_in_production', { status: 404 });
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   const key = extractBearerToken(req.headers.get('authorization'));
 
   if (!timingSafeEqualString(REGISTER_COMMANDS_KEY, key)) {
-    auditLog('unauthorized', { ip, requestId });
+    log('unauthorized', { status: 401 });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -97,9 +73,7 @@ export async function GET(req: Request) {
       registeredCommandCount: null,
       error: maybeError.message ?? 'Unknown error',
     };
-    auditLog('commands_check_failed', {
-      ip,
-      requestId,
+    log('commands_check_failed', {
       status: maybeError.status ?? null,
     });
   }
@@ -145,18 +119,15 @@ export async function GET(req: Request) {
       verifyKeyMatches: null,
       error: maybeError.message ?? 'Unknown error',
     };
-    auditLog('application_check_failed', {
-      ip,
-      requestId,
+    log('application_check_failed', {
       status: maybeError.status ?? null,
     });
   }
 
-  auditLog('success', {
+  log('success', {
     appCheckOk: applicationCheck.ok,
     commandCheckOk: discordApiCheck.ok,
-    ip,
-    requestId,
+    status: 200,
   });
   return NextResponse.json({
     ok: true,

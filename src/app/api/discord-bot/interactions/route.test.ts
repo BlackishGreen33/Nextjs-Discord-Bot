@@ -9,6 +9,11 @@ vi.mock('@/common/configs', () => ({
 }));
 
 vi.mock('@/common/utils', () => ({
+  createRequestLogger: () => ({
+    ip: '127.0.0.1',
+    log: vi.fn(),
+    requestId: 'req-id',
+  }),
   getCommands: (...args: unknown[]) => getCommandsMock(...args),
   verifyInteractionRequest: (...args: unknown[]) =>
     verifyInteractionRequestMock(...args),

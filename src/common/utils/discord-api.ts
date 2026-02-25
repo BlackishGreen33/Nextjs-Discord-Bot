@@ -3,6 +3,10 @@ import type { RESTGetAPIApplicationCommandsResult } from 'discord-api-types/v10'
 import { BOT_TOKEN } from '../configs';
 
 const DISCORD_API_BASE_URL = 'https://discord.com/api';
+const REQUEST_TIMEOUT_MS = 5000;
+const MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 250;
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 class DiscordApiError extends Error {
   status: number;
@@ -23,29 +27,66 @@ const request = async <T>(
   path: string,
   init: RequestInit
 ): Promise<DiscordApiResponse<T>> => {
-  const response = await fetch(`${DISCORD_API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bot ${BOT_TOKEN}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
+  let networkError: unknown = null;
 
-  const text = await response.text();
-  const data = text.length > 0 ? (JSON.parse(text) as T) : ({} as T);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new DiscordApiError(
-      `Discord API request failed with status ${response.status}`,
-      response.status
-    );
+    try {
+      const response = await fetch(`${DISCORD_API_BASE_URL}${path}`, {
+        ...init,
+        headers: {
+          Authorization: `Bot ${BOT_TOKEN}`,
+          'Content-Type': 'application/json',
+          ...(init.headers ?? {}),
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const text = await response.text();
+      const data = text.length > 0 ? (JSON.parse(text) as T) : ({} as T);
+
+      if (!response.ok) {
+        if (attempt < MAX_RETRIES && RETRYABLE_STATUSES.has(response.status)) {
+          const retryAfterSeconds = Number(response.headers.get('Retry-After'));
+          const retryDelayMs =
+            Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+              ? retryAfterSeconds * 1000
+              : BASE_RETRY_DELAY_MS * (attempt + 1);
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+          continue;
+        }
+
+        throw new DiscordApiError(
+          `Discord API request failed with status ${response.status}`,
+          response.status
+        );
+      }
+
+      return {
+        data,
+        status: response.status,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      networkError = error;
+      if (attempt < MAX_RETRIES) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, BASE_RETRY_DELAY_MS * (attempt + 1))
+        );
+        continue;
+      }
+    }
   }
 
-  return {
-    data,
-    status: response.status,
-  };
+  const maybeError = networkError as { message?: string };
+  throw new DiscordApiError(
+    maybeError?.message ?? 'Discord API request failed',
+    0
+  );
 };
 
 export const discord_api = {

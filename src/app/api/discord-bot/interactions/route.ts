@@ -2,18 +2,14 @@ import { APIInteractionResponse, InteractionType } from 'discord-api-types/v10';
 import { NextResponse } from 'next/server';
 
 import { PUBLIC_KEY } from '@/common/configs';
-import { getCommands, verifyInteractionRequest } from '@/common/utils';
+import {
+  createRequestLogger,
+  getCommands,
+  verifyInteractionRequest,
+} from '@/common/utils';
 
 export async function POST(req: Request) {
-  const startedAt = Date.now();
-  const log = (phase: string, extra?: Record<string, unknown>) => {
-    process.stdout.write(
-      `[interactions] ${phase} ${JSON.stringify({
-        t: Date.now() - startedAt,
-        ...extra,
-      })}\n`
-    );
-  };
+  const { log } = createRequestLogger('interactions', req);
 
   const ephemeralError = (content: string) =>
     NextResponse.json({
@@ -29,31 +25,38 @@ export async function POST(req: Request) {
     const verifyRes = await verifyInteractionRequest(req, PUBLIC_KEY);
 
     if (!verifyRes.isValid || !verifyRes.interaction) {
-      log('invalid-signature');
+      log('invalid-signature', { status: 401 });
       return new NextResponse('Invalid request', { status: 401 });
     }
     const { interaction } = verifyRes;
     log('verified', { type: interaction.type });
 
     if (interaction.type === InteractionType.Ping) {
-      log('discord-ping');
+      log('discord-ping', { status: 200 });
       return NextResponse.json({ type: 1 });
     }
     const allCommands = await getCommands();
     const commandName = interaction.data.name;
     const command = allCommands[commandName];
     if (!command) {
-      log('unknown-command', { commandName, known: Object.keys(allCommands) });
+      log('unknown-command', {
+        commandName,
+        known: Object.keys(allCommands),
+        status: 200,
+      });
       return ephemeralError(`Unknown command: /${commandName}`);
     }
 
     log('execute-command', { commandName });
     const reply = await command.execute(interaction);
-    log('ok', { commandName });
+    log('ok', { commandName, status: 200 });
     return NextResponse.json(reply);
   } catch (error) {
     const maybeError = error as { message?: string };
-    log('execute-error', { message: maybeError.message ?? 'Unknown error' });
+    log('execute-error', {
+      message: maybeError.message ?? 'Unknown error',
+      status: 200,
+    });
     return ephemeralError('Command failed. Please try again later.');
   }
 }
