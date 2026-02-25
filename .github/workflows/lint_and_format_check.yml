@@ -9,50 +9,102 @@ on:
       - main
 
 jobs:
-  build:
+  format:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v3
         with:
           version: '10.10.0'
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm'
+          node-version: 20
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Run TypeScript typecheck
-        run: pnpm typecheck
-        continue-on-error: false
-
-      - name: Run Prettier
+      - name: Run Prettier check
         run: pnpm prettier --check .
-        continue-on-error: false
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: '10.10.0'
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm'
+          node-version: 20
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
         run: pnpm lint
-        continue-on-error: false
+
+  typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: '10.10.0'
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm'
+          node-version: 20
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run TypeScript typecheck
+        run: pnpm typecheck
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: '10.10.0'
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm'
+          node-version: 20
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Run tests
         run: pnpm test
-        continue-on-error: false
-
-      - name: Check if PR should be blocked
-        if: github.event_name == 'pull_request'
-        run: |
-          if [[ "${{ job.status }}" == "failure" ]]; then
-            echo "The 'Build and Test' step failed. The PR will be blocked from merging."
-          else
-            echo "The 'Build and Test' step passed. The PR can be merged."
-          fi
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "Build failed. Please check the logs for details."
-          # Optionally, send notifications or update PR status
