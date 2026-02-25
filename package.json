@@ -29,7 +29,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "discord-api-types": "^0.38.34",
+    "discord-api-types": "^0.38.40",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.11",
     "eslint-config-prettier": "^10.1.8",
