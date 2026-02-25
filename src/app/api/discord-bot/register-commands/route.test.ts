@@ -11,7 +11,16 @@ vi.mock('@/common/utils', () => ({
   discord_api: {
     put: (...args: unknown[]) => putMock(...args),
   },
+  extractBearerToken: (authorizationHeader: string | null) => {
+    if (!authorizationHeader) return null;
+    const bearerPrefix = 'Bearer ';
+    return authorizationHeader.startsWith(bearerPrefix)
+      ? authorizationHeader.slice(bearerPrefix.length)
+      : null;
+  },
   getCommands: (...args: unknown[]) => getCommandsMock(...args),
+  timingSafeEqualString: (expected: string, actual: string | null) =>
+    expected === actual,
 }));
 
 const importRoute = async () => {

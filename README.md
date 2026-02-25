@@ -63,9 +63,9 @@ The app runs on `http://localhost:3000`.
 
 ## Debug Endpoint
 
-- Route: `GET /api/discord-bot/debug?REGISTER_COMMANDS_KEY=<key>`
+- Route: `GET /api/discord-bot/debug`
 - Available in non-production only
-- Requires `REGISTER_COMMANDS_KEY`
+- Requires `Authorization: Bearer <REGISTER_COMMANDS_KEY>`
 - Returns environment readiness and Discord API health checks
 
 ## CI

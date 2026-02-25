@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 
 import { REGISTER_COMMANDS_KEY } from '@/common/configs';
-import { discord_api, getCommands } from '@/common/utils';
+import {
+  discord_api,
+  extractBearerToken,
+  getCommands,
+  timingSafeEqualString,
+} from '@/common/utils';
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_WINDOW_SECONDS = RATE_LIMIT_WINDOW_MS / 1000;
@@ -121,14 +126,9 @@ export async function POST(req: Request) {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    const authorization = req.headers.get('authorization');
-    const bearerPrefix = 'Bearer ';
-    const requestKey =
-      authorization && authorization.startsWith(bearerPrefix)
-        ? authorization.slice(bearerPrefix.length)
-        : null;
+    const requestKey = extractBearerToken(req.headers.get('authorization'));
 
-    if (!requestKey || requestKey !== REGISTER_COMMANDS_KEY) {
+    if (!timingSafeEqualString(REGISTER_COMMANDS_KEY, requestKey)) {
       auditLog('unauthorized', { ip: clientIp, requestId });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

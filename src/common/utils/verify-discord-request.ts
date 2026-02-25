@@ -60,8 +60,15 @@ const verifyInteractionRequest = async (
     return { isValid: false };
   }
 
+  let interaction: Interaction;
+  try {
+    interaction = JSON.parse(rawBody) as Interaction;
+  } catch {
+    return { isValid: false };
+  }
+
   return {
-    interaction: JSON.parse(rawBody) as Interaction,
+    interaction,
     isValid: true,
   };
 };

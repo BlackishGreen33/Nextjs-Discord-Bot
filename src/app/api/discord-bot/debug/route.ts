@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 
 import { REGISTER_COMMANDS_KEY } from '@/common/configs';
-import { discord_api, getCommands } from '@/common/utils';
+import {
+  discord_api,
+  extractBearerToken,
+  getCommands,
+  timingSafeEqualString,
+} from '@/common/utils';
 
 const mask = (value: string | undefined) => {
   if (!value) return null;
@@ -43,10 +48,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const key = searchParams.get('REGISTER_COMMANDS_KEY');
+  const key = extractBearerToken(req.headers.get('authorization'));
 
-  if (!key || key !== REGISTER_COMMANDS_KEY) {
+  if (!timingSafeEqualString(REGISTER_COMMANDS_KEY, key)) {
     auditLog('unauthorized', { ip, requestId });
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
