@@ -1,11 +1,11 @@
+import { fixupConfigRules } from '@eslint/compat';
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
 
 const eslintConfig = [
-  ...nextCoreWebVitals,
-  ...nextTypescript,
+  ...fixupConfigRules([...nextCoreWebVitals, ...nextTypescript]),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
