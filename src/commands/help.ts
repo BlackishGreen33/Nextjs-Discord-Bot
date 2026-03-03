@@ -13,6 +13,11 @@ export const execute: executeCommand = async () => {
   const fields = commandsList.data.map((c) => {
     return { name: '/' + c.name, value: c.description + '\n \u200b' };
   });
+  fields.push({
+    name: '/faq quick start',
+    value:
+      '`/faq get <key>`\n`/faq list`\nAdmins: `/faq set <key> <answer>`, `/faq delete <key>`',
+  });
 
   return {
     type: 4,

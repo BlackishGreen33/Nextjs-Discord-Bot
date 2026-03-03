@@ -15,11 +15,27 @@ const RATE_LIMIT_MAX_REQUESTS = 5;
 const RATE_LIMIT_KEY_PREFIX = 'register_commands_rate_limit';
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+let nextCleanupAt = 0;
 const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_REDIS_AUTH_HEADER = process.env.UPSTASH_REDIS_REST_TOKEN;
 
+const cleanupExpiredRateLimitEntries = (now: number) => {
+  if (now < nextCleanupAt) {
+    return;
+  }
+
+  rateLimitStore.forEach((bucket, ip) => {
+    if (bucket.resetAt <= now) {
+      rateLimitStore.delete(ip);
+    }
+  });
+
+  nextCleanupAt = now + RATE_LIMIT_WINDOW_MS;
+};
+
 const isRateLimitedInMemory = (clientIp: string) => {
   const now = Date.now();
+  cleanupExpiredRateLimitEntries(now);
   const existing = rateLimitStore.get(clientIp);
 
   if (!existing || existing.resetAt <= now) {

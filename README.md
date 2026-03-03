@@ -18,6 +18,7 @@ Create `.env.local` from `.env.example` and fill the values below:
 - `REGISTER_COMMANDS_KEY`: Secret key for protected command registration in production
 - `UPSTASH_REDIS_REST_URL` (optional): Redis REST URL for distributed rate limiting
 - `UPSTASH_REDIS_REST_TOKEN` (optional): Redis REST token for distributed rate limiting
+- `REDIS_NAMESPACE` (optional): Redis key namespace prefix for FAQ storage (default: `discord-bot`)
 
 ## Install
 
@@ -61,6 +62,35 @@ The app runs on `http://localhost:3000`.
   - Command dispatch from `src/commands`
   - Ephemeral fallback errors on unknown or failed commands
 
+## FAQ Command
+
+- Slash command: `/faq`
+- Subcommands:
+  - `/faq get <key>`: get FAQ answer in channel
+  - `/faq list`: list FAQ keys in channel
+  - `/faq set <key> <answer>`: admin/mod only, stored as ephemeral result
+  - `/faq delete <key>`: admin/mod only, stored as ephemeral result
+- Notes:
+  - FAQ keys are normalized to lowercase slug format (`welcome-rules`).
+  - FAQ data is guild-scoped and stored in Upstash Redis.
+  - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are required to enable FAQ storage.
+
+## Production Register-Commands Runbook
+
+When to run:
+1. After deploying changes that add/remove/rename slash commands.
+2. After changing command descriptions/options.
+3. During incident recovery if commands are out of sync with code.
+
+Who should run:
+1. A deploy operator with production access and `REGISTER_COMMANDS_KEY`.
+
+How to run:
+1. Call `POST /api/discord-bot/register-commands` with `Authorization: Bearer <REGISTER_COMMANDS_KEY>`.
+2. Confirm `200` response and check logs for `registered`.
+3. If you receive `429`, wait `Retry-After` seconds and retry.
+4. Verify in Discord client that command list reflects the latest code.
+
 ## Debug Endpoint
 
 - Route: `GET /api/discord-bot/debug`
@@ -83,6 +113,7 @@ GitHub Actions workflow runs on push/PR to `main`:
 - `src/app/api/discord-bot/register-commands/route.ts`: command registration endpoint
 - `src/app/api/discord-bot/debug/route.ts`: debug checks endpoint
 - `src/commands/*`: slash command implementations
+- `src/common/stores/*`: Redis-backed FAQ storage abstraction
 - `src/common/utils/*`: shared helpers
 
 ## Deployment Notes

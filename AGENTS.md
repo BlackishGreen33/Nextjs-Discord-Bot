@@ -72,6 +72,6 @@
 - 測試框架：Vitest（`pnpm test`）。
 - API 與工具函式測試檔使用 `*.test.ts`（例如 route 與 verify 工具）。
 
-## TODO
+## Runbook
 
-- TODO: 補上正式環境「何時/由誰觸發 register-commands」操作 runbook（目前 repo 僅定義端點保護機制）。
+- 正式環境 `register-commands` 操作流程已記錄於 `README.md` 的 `Production Register-Commands Runbook` 章節。
