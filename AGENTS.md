@@ -4,9 +4,9 @@
 
 ## 核心原則
 
-- 先用現有指令與流程驗證，再新增規範。
-- 文件描述必須對應現況實作，不描述理想狀態。
-- 若資訊不足，先加一則簡短 TODO，不臆測。
+- 只依據 repo 目前可驗證的實作與設定行事。
+- 變更優先最小範圍，避免改動無關檔案。
+- 若資訊不足，先新增 `TODO`，不要臆測。
 
 ## 專案與環境
 
@@ -18,16 +18,16 @@
   - `POST /api/discord-bot/register-commands`
   - `GET /api/discord-bot/debug`
 
-## 常用指令
+## 本專案已驗證指令
 
-- 安裝依賴：`pnpm install`
-- 本地開發：`pnpm dev`
-- 建置：`pnpm build`
-- 啟動正式模式：`pnpm start`
-- 程式碼檢查：`pnpm lint`
-- 型別檢查：`pnpm typecheck`
-- 測試：`pnpm test`
-- 格式化：`pnpm prettier`
+- `pnpm install`：安裝依賴。
+- `pnpm dev`：啟動本機開發伺服器。
+- `pnpm build`：建立 production build。
+- `pnpm start`：啟動 production server。
+- `pnpm lint`：執行 ESLint。
+- `pnpm typecheck`：執行 `tsc --noEmit`。
+- `pnpm test`：執行 Vitest（`vitest run`）。
+- `pnpm prettier`：執行 `prettier --write .`。
 
 ## 既有工作流程
 
@@ -41,7 +41,7 @@
 
 1. 開發環境可由首頁按鈕觸發 `POST /api/discord-bot/register-commands`。
 2. 正式環境下，`POST /api/discord-bot/register-commands` 需 `Authorization: Bearer <REGISTER_COMMANDS_KEY>`。
-3. 註冊端點有 rate limit，超過時回傳 `429` 與 `Retry-After`。
+3. 註冊端點有 rate limit（每 IP 每分鐘最多 5 次），超過時回傳 `429` 與 `Retry-After`。
 
 ### 3. Interaction 驗證與分派
 
