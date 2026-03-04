@@ -19,6 +19,11 @@ Create `.env.local` from `.env.example` and fill the values below:
 - `UPSTASH_REDIS_REST_URL` (optional): Redis REST URL for distributed rate limiting
 - `UPSTASH_REDIS_REST_TOKEN` (optional): Redis REST token for distributed rate limiting
 - `REDIS_NAMESPACE` (optional): Redis key namespace prefix for FAQ storage (default: `discord-bot`)
+- `MEDIA_WORKER_BASE_URL` (optional): external worker URL for media preview/download
+- `MEDIA_WORKER_TOKEN` (optional): bearer token for media worker
+- `MEDIA_WORKER_TIMEOUT_MS` (optional): worker request timeout in milliseconds
+- `MEDIA_ALLOWED_DOMAINS` (optional): comma-separated URL domain allowlist for media links
+- `DISCORD_GATEWAY_TOKEN` (optional): token used by gateway listener process (defaults to `BOT_TOKEN`)
 
 ## Install
 
@@ -41,6 +46,7 @@ The app runs on `http://localhost:3000`.
 - `pnpm test`: run Vitest test suite
 - `pnpm build`: build for production
 - `pnpm start`: start production server
+- `pnpm gateway:listen`: run the Discord Gateway listener for auto link cards
 
 ## Slash Command Registration
 
@@ -74,6 +80,43 @@ The app runs on `http://localhost:3000`.
   - FAQ keys are normalized to lowercase slug format (`welcome-rules`).
   - FAQ data is guild-scoped and stored in Upstash Redis.
   - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are required to enable FAQ storage.
+
+## Download Command and Media Buttons
+
+- Slash command: `/download <url>`
+- Behavior:
+  - Validates URL against `MEDIA_ALLOWED_DOMAINS`
+  - Requests preview data from `MEDIA_WORKER_BASE_URL` (or uses fallback preview)
+  - Posts a media card with action buttons:
+    - `Download Video`
+    - `Download Audio`
+    - `Delete`
+- Button interaction:
+  - `Download Video` / `Download Audio`: calls media worker `POST /v1/download`
+  - `Delete`: only card owner or admins can remove the card
+
+## Auto Link Cards (Gateway Listener)
+
+- To support \"user pastes URL -> bot auto replies with card\", run:
+  - `worker/gateway-listener/index.mjs`
+- Why this is separate:
+  - Current Next.js webhook handles interactions only
+  - Discord message events (`MESSAGE_CREATE`) require a Gateway client process
+- Requirements:
+  - Enable **Message Content Intent** in Discord Developer Portal
+  - Deploy gateway listener as an always-on process (container/VM)
+
+## Cloudflare Media Worker
+
+- Worker scaffold path: `worker/cloudflare-media-proxy`
+- Endpoints:
+  - `POST /v1/preview`
+  - `POST /v1/download`
+- Strategy:
+  - Third-party first (cobalt API)
+  - Optional fallback API (self-hosted yt-dlp service)
+- See:
+  - `worker/cloudflare-media-proxy/README.md`
 
 ## Production Register-Commands Runbook
 
@@ -115,6 +158,8 @@ GitHub Actions workflow runs on push/PR to `main`:
 - `src/commands/*`: slash command implementations
 - `src/common/stores/*`: Redis-backed FAQ storage abstraction
 - `src/common/utils/*`: shared helpers
+- `worker/cloudflare-media-proxy/*`: Cloudflare Worker for media proxy
+- `worker/gateway-listener/*`: Discord Gateway listener for auto link cards
 
 ## Deployment Notes
 

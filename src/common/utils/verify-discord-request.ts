@@ -1,5 +1,6 @@
 import {
   APIApplicationCommandInteraction,
+  APIMessageComponentInteraction,
   APIPingInteraction,
 } from 'discord-api-types/v10';
 import nacl from 'tweetnacl';
@@ -28,7 +29,10 @@ const verifyWithNacl = ({
   );
 };
 
-type Interaction = APIPingInteraction | APIApplicationCommandInteraction;
+type Interaction =
+  | APIPingInteraction
+  | APIApplicationCommandInteraction
+  | APIMessageComponentInteraction;
 
 type VerifyDiscordRequestResult =
   | { isValid: false }

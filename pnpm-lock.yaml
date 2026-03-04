@@ -11,9 +11,6 @@ importers:
       '@discordjs/builders':
         specifier: ^1.13.1
         version: 1.13.1
-      discord-interactions:
-        specifier: ^4.4.0
-        version: 4.4.0
       discord.js:
         specifier: ^14.25.1
         version: 14.25.1
@@ -1351,10 +1348,6 @@ packages:
 
   discord-api-types@0.38.40:
     resolution: {integrity: sha512-P/His8cotqZgQqrt+hzrocp9L8RhQQz1GkrCnC9TMJ8Uw2q0tg8YyqJyGULxhXn/8kxHETN4IppmOv+P2m82lQ==}
-
-  discord-interactions@4.4.0:
-    resolution: {integrity: sha512-jjJx8iwAeJcj8oEauV43fue9lNqkf38fy60aSs2+G8D1nJmDxUIrk08o3h0F3wgwuBWWJUZO+X/VgfXsxpCiJA==}
-    engines: {node: '>=18.4.0'}
 
   discord.js@14.25.1:
     resolution: {integrity: sha512-2l0gsPOLPs5t6GFZfQZKnL1OJNYFcuC/ETWsW4VtKVD/tg4ICa9x+jb9bkPffkMdRpRpuUaO/fKkHCBeiCKh8g==}
@@ -3740,8 +3733,6 @@ snapshots:
   detect-libc@2.1.2: {}
 
   discord-api-types@0.38.40: {}
-
-  discord-interactions@4.4.0: {}
 
   discord.js@14.25.1:
     dependencies:

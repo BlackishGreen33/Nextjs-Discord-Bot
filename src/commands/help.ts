@@ -14,6 +14,11 @@ export const execute: executeCommand = async () => {
     return { name: '/' + c.name, value: c.description + '\n \u200b' };
   });
   fields.push({
+    name: '/download quick start',
+    value:
+      '`/download <url>`\nThen use buttons: `Download Video`, `Download Audio`, `Delete`',
+  });
+  fields.push({
     name: '/faq quick start',
     value:
       '`/faq get <key>`\n`/faq list`\nAdmins: `/faq set <key> <answer>`, `/faq delete <key>`',

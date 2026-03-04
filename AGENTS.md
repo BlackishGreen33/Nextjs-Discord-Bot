@@ -28,6 +28,7 @@
 - `pnpm typecheck`：執行 `tsc --noEmit`。
 - `pnpm test`：執行 Vitest（`vitest run`）。
 - `pnpm prettier`：執行 `prettier --write .`。
+- `pnpm gateway:listen`：啟動 Discord Gateway listener（自動連結卡片）。
 
 ## 既有工作流程
 
@@ -48,14 +49,21 @@
 1. `POST /api/discord-bot/interactions` 會先驗簽（`x-signature-ed25519`、`x-signature-timestamp`）。
 2. `Ping` 互動回傳 pong。
 3. Slash command 由 `src/commands` 分派；未知或執行失敗時回傳 ephemeral 錯誤訊息。
+4. Message component（按鈕）由 `src/common/utils/media-component-handler.ts` 分派，支援 media card 的下載與刪除互動。
 
-### 4. 除錯檢查
+### 4. 自動連結卡片（Gateway）
+
+1. 貼連結自動回卡片需額外執行 `worker/gateway-listener/index.mjs`（非 Next.js webhook）。
+2. 需在 Discord Developer Portal 開啟 Message Content Intent。
+3. 連結預覽/下載由外部 media worker（例如 `worker/cloudflare-media-proxy`）處理。
+
+### 5. 除錯檢查
 
 1. `GET /api/discord-bot/debug` 僅非 production 可用。
 2. 需 `Authorization: Bearer <REGISTER_COMMANDS_KEY>`。
 3. 回傳環境變數就緒狀態與 Discord API 健康檢查。
 
-### 5. 提交前與 CI
+### 6. 提交前與 CI
 
 - Husky `pre-commit`：
   - `pnpm exec eslint --fix .`

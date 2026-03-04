@@ -5,6 +5,7 @@ import { PUBLIC_KEY } from '@/common/configs';
 import {
   createRequestLogger,
   getCommands,
+  handleMediaButtonInteraction,
   verifyInteractionRequest,
 } from '@/common/utils';
 
@@ -30,11 +31,34 @@ export async function POST(req: Request) {
     }
     const { interaction } = verifyRes;
     log('verified', { type: interaction.type });
+    const interactionType = interaction.type as number;
+
+    if (
+      ![
+        InteractionType.Ping,
+        InteractionType.ApplicationCommand,
+        InteractionType.MessageComponent,
+      ].includes(interactionType)
+    ) {
+      log('unsupported-interaction-type', {
+        status: 200,
+        type: interactionType,
+      });
+      return ephemeralError('Unsupported interaction type.');
+    }
 
     if (interaction.type === InteractionType.Ping) {
       log('discord-ping', { status: 200 });
       return NextResponse.json({ type: 1 });
     }
+
+    if (interaction.type === InteractionType.MessageComponent) {
+      log('execute-component', { customId: interaction.data.custom_id });
+      const reply = await handleMediaButtonInteraction(interaction);
+      log('component-ok', { status: 200 });
+      return NextResponse.json(reply);
+    }
+
     const allCommands = await getCommands();
     const commandName = interaction.data.name;
     const command = allCommands[commandName];

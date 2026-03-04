@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const verifyInteractionRequestMock = vi.fn();
 const getCommandsMock = vi.fn();
+const handleMediaButtonInteractionMock = vi.fn();
 
 vi.mock('@/common/configs', () => ({
   PUBLIC_KEY: 'test-public-key',
@@ -15,6 +16,8 @@ vi.mock('@/common/utils', () => ({
     requestId: 'req-id',
   }),
   getCommands: (...args: unknown[]) => getCommandsMock(...args),
+  handleMediaButtonInteraction: (...args: unknown[]) =>
+    handleMediaButtonInteractionMock(...args),
   verifyInteractionRequest: (...args: unknown[]) =>
     verifyInteractionRequestMock(...args),
 }));
@@ -101,5 +104,51 @@ describe('POST /api/discord-bot/interactions', () => {
     expect(body.type).toBe(4);
     expect(body.data.flags).toBe(64);
     expect(body.data.content).toBe('Command failed. Please try again later.');
+  });
+
+  it('handles message component interactions via media handler', async () => {
+    verifyInteractionRequestMock.mockResolvedValue({
+      interaction: {
+        data: { component_type: 2, custom_id: 'dl:v1:video:user-1' },
+        type: InteractionType.MessageComponent,
+      },
+      isValid: true,
+    });
+    handleMediaButtonInteractionMock.mockResolvedValue({
+      data: { content: 'Download ready' },
+      type: 4,
+    });
+
+    const response = await POST(buildRequest());
+    const body = (await response.json()) as {
+      data: { content: string };
+      type: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.type).toBe(4);
+    expect(body.data.content).toBe('Download ready');
+    expect(handleMediaButtonInteractionMock).toHaveBeenCalledTimes(1);
+    expect(getCommandsMock).not.toHaveBeenCalled();
+  });
+
+  it('returns ephemeral error for unsupported interaction type', async () => {
+    verifyInteractionRequestMock.mockResolvedValue({
+      interaction: {
+        type: InteractionType.ModalSubmit,
+      },
+      isValid: true,
+    });
+
+    const response = await POST(buildRequest());
+    const body = (await response.json()) as {
+      data: { content: string; flags: number };
+      type: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.type).toBe(4);
+    expect(body.data.flags).toBe(64);
+    expect(body.data.content).toContain('Unsupported interaction type');
   });
 });
