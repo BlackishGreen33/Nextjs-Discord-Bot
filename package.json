@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.2",
-    "@eslint/eslintrc": "^3.3.4",
+    "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^25.3.2",
