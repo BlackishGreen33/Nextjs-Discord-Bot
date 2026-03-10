@@ -1,13 +1,16 @@
 name = "discord-media-proxy"
 main = "src/index.ts"
 compatibility_date = "2026-03-04"
+workers_dev = true
 
 # Set with: wrangler secret put WORKER_AUTH_TOKEN
 # Optional fallback worker for yt-dlp service:
 # wrangler secret put FALLBACK_API_TOKEN
 
 [vars]
-COBALT_API_BASE_URL = "https://your-cobalt-instance.example"
-MEDIA_ALLOWED_DOMAINS = "x.com,twitter.com"
+COBALT_API_BASE_URL = "https://cobalt-api-bg.onrender.com"
+MEDIA_ALLOWED_DOMAINS = "x.com,twitter.com,youtube.com,youtu.be,instagram.com,facebook.com,fb.watch"
 # Optional fallback service endpoint (yt-dlp runner)
 # FALLBACK_API_BASE_URL = "https://your-fallback-api.example"
+# Optional cobalt key auth:
+# wrangler secret put COBALT_API_KEY

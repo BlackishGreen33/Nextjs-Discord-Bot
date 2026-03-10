@@ -18,6 +18,7 @@ This Worker provides two internal endpoints for the Next.js Discord bot:
 ## Optional env vars
 
 - `WORKER_AUTH_TOKEN`: Bearer token expected by this worker.
+- `COBALT_API_KEY`: sent as `Authorization: Api-Key <token>` when cobalt auth is enabled.
 - `MEDIA_ALLOWED_DOMAINS`: comma-separated domain allowlist.
 - `FALLBACK_API_BASE_URL`: fallback API endpoint (`/v1/download`).
 - `FALLBACK_API_TOKEN`: Bearer token for fallback API.

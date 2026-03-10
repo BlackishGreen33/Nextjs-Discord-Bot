@@ -1,5 +1,6 @@
 interface Env {
   COBALT_API_BASE_URL: string;
+  COBALT_API_KEY?: string;
   FALLBACK_API_BASE_URL?: string;
   FALLBACK_API_TOKEN?: string;
   MEDIA_ALLOWED_DOMAINS?: string;
@@ -142,6 +143,11 @@ const callCobalt = async (
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...(env.COBALT_API_KEY
+        ? {
+            Authorization: `Api-Key ${env.COBALT_API_KEY}`,
+          }
+        : {}),
     },
     method: 'POST',
   });
