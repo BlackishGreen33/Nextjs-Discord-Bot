@@ -1,27 +1,40 @@
 # Cloudflare Media Proxy Worker
 
-This Worker provides two internal endpoints for the Next.js Discord bot:
+This Worker is the preview center for the Discord bot.
 
-- `POST /v1/preview`: returns normalized preview metadata.
-- `POST /v1/download`: requests media URL from cobalt, then optional fallback API.
+Endpoints:
 
-## Why this exists
+- `POST /v1/preview`
+- `POST /v1/translate`
+- `POST /v1/gif`
+- `GET /health`
 
-- Keep heavy media logic outside Vercel Functions.
-- Use "third-party first, self-built fallback" strategy.
-- Keep Discord bot webhook lean and stable.
+## Responsibilities
 
-## Required env vars
+- fetch and normalize preview data for X/Twitter, Pixiv, and Bluesky
+- proxy text translation to a LibreTranslate-compatible API
+- proxy GIF conversion requests to the Render GIF service
+- keep heavy provider logic outside the Next.js interaction webhook
 
-- `COBALT_API_BASE_URL`
+## Environment Variables
 
-## Optional env vars
+Required for secured deployments:
 
-- `WORKER_AUTH_TOKEN`: Bearer token expected by this worker.
-- `COBALT_API_KEY`: sent as `Authorization: Api-Key <token>` when cobalt auth is enabled.
-- `MEDIA_ALLOWED_DOMAINS`: comma-separated domain allowlist.
-- `FALLBACK_API_BASE_URL`: fallback API endpoint (`/v1/download`).
-- `FALLBACK_API_TOKEN`: Bearer token for fallback API.
+- `WORKER_AUTH_TOKEN`: bearer token expected by the worker
+
+Optional provider configuration:
+
+- `MEDIA_ALLOWED_DOMAINS`: comma-separated URL allowlist
+- `FXEMBED_PUBLIC_BASE_URL`: default `https://api.fxtwitter.com`
+- `FXEMBED_FALLBACK_BASE_URL`: optional alternate FxEmbed-compatible base URL
+- `PHIXIV_PUBLIC_BASE_URL`: default `https://phixiv.net`
+- `PHIXIV_FALLBACK_BASE_URL`: optional alternate phixiv-compatible base URL
+- `BLUESKY_PUBLIC_BASE_URL`: default `https://public.api.bsky.app/xrpc`
+- `BLUESKY_FALLBACK_BASE_URL`: optional alternate Bluesky API base URL
+- `TRANSLATE_API_BASE_URL`: LibreTranslate-compatible API base URL
+- `TRANSLATE_API_KEY`: optional translate API key
+- `GIF_API_BASE_URL`: GIF service base URL
+- `GIF_API_TOKEN`: bearer token for the GIF service
 
 ## Deploy
 
@@ -30,11 +43,27 @@ cd worker/cloudflare-media-proxy
 pnpm dlx wrangler deploy
 ```
 
-## Next.js integration
+## Next.js Integration
 
 Set these in the Next.js app:
 
 - `MEDIA_WORKER_BASE_URL=https://<your-worker-domain>`
 - `MEDIA_WORKER_TOKEN=<same as WORKER_AUTH_TOKEN>`
 
-The `/download` command and media buttons will call this Worker.
+## Smoke Test
+
+Run the project-level smoke test against a live worker:
+
+```bash
+MEDIA_WORKER_BASE_URL=https://<your-worker-domain> \
+MEDIA_WORKER_TOKEN=<worker-token> \
+pnpm worker:smoke
+```
+
+Useful options:
+
+- `--twitter-url <url>`
+- `--pixiv-url <url>`
+- `--bluesky-url <url>`
+- `--translate-target <lang>`
+- `--gif-media-url <url>`

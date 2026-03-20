@@ -14,9 +14,9 @@ export const execute: executeCommand = async () => {
     return { name: '/' + c.name, value: c.description + '\n \u200b' };
   });
   fields.push({
-    name: '/download quick start',
+    name: '/settings quick start',
     value:
-      '`/download <url>`\nThen use buttons: `Download Video`, `Download Audio`, `Delete`',
+      '`/settings`\nAdmins can enable or disable auto preview, platforms, translation, GIF conversion, output mode, and NSFW behavior.',
   });
   fields.push({
     name: '/faq quick start',

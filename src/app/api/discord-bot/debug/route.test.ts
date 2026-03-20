@@ -60,6 +60,7 @@ describe('GET /api/discord-bot/debug', () => {
       faq: {},
       help: {},
       ping: {},
+      settings: {},
     });
 
     discordGetMock.mockImplementation((path: string) => {
@@ -123,7 +124,7 @@ describe('GET /api/discord-bot/debug', () => {
       PUBLIC_KEY: true,
       REGISTER_COMMANDS_KEY: true,
     });
-    expect(body.localCommandNames).toEqual(['faq', 'help', 'ping']);
+    expect(body.localCommandNames).toEqual(['faq', 'help', 'ping', 'settings']);
     expect(body.discordApiCheck.ok).toBe(true);
     expect(body.discordApiCheck.registeredCommandCount).toBe(2);
     expect(body.applicationCheck.ok).toBe(true);

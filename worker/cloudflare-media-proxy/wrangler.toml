@@ -1,16 +1,20 @@
 name = "discord-media-proxy"
 main = "src/index.ts"
-compatibility_date = "2026-03-04"
+compatibility_date = "2026-03-19"
 workers_dev = true
 
 # Set with: wrangler secret put WORKER_AUTH_TOKEN
-# Optional fallback worker for yt-dlp service:
-# wrangler secret put FALLBACK_API_TOKEN
+# Optional: wrangler secret put GIF_API_TOKEN
+# Optional: wrangler secret put TRANSLATE_API_KEY
 
 [vars]
-COBALT_API_BASE_URL = "https://cobalt-api-bg.onrender.com"
-MEDIA_ALLOWED_DOMAINS = "x.com,twitter.com,youtube.com,youtu.be,instagram.com,facebook.com,fb.watch"
-# Optional fallback service endpoint (yt-dlp runner)
-# FALLBACK_API_BASE_URL = "https://your-fallback-api.example"
-# Optional cobalt key auth:
-# wrangler secret put COBALT_API_KEY
+MEDIA_ALLOWED_DOMAINS = "x.com,twitter.com,pixiv.net,www.pixiv.net,bsky.app"
+FXEMBED_PUBLIC_BASE_URL = "https://api.fxtwitter.com"
+PHIXIV_PUBLIC_BASE_URL = "https://phixiv.net"
+BLUESKY_PUBLIC_BASE_URL = "https://public.api.bsky.app/xrpc"
+# Optional alternates:
+# FXEMBED_FALLBACK_BASE_URL = "https://your-fxembed.example"
+# PHIXIV_FALLBACK_BASE_URL = "https://your-phixiv.example"
+# BLUESKY_FALLBACK_BASE_URL = "https://your-bluesky-api.example"
+# GIF_API_BASE_URL = "https://your-render-gif-service.onrender.com"
+# TRANSLATE_API_BASE_URL = "https://translate.example"

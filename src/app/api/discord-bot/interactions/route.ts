@@ -1,13 +1,15 @@
 import { APIInteractionResponse, InteractionType } from 'discord-api-types/v10';
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 
 import { PUBLIC_KEY } from '@/common/configs';
 import {
   createRequestLogger,
   getCommands,
-  handleMediaButtonInteraction,
+  handleMediaComponentInteraction,
   verifyInteractionRequest,
 } from '@/common/utils';
+
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const { log } = createRequestLogger('interactions', req);
@@ -54,7 +56,13 @@ export async function POST(req: Request) {
 
     if (interaction.type === InteractionType.MessageComponent) {
       log('execute-component', { customId: interaction.data.custom_id });
-      const reply = await handleMediaButtonInteraction(interaction);
+      const reply = await handleMediaComponentInteraction(interaction, {
+        scheduleBackgroundTask: (task) => {
+          after(async () => {
+            await task;
+          });
+        },
+      });
       log('component-ok', { status: 200 });
       return NextResponse.json(reply);
     }

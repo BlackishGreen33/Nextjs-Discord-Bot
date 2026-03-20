@@ -90,9 +90,18 @@ const request = async <T>(
 };
 
 export const discord_api = {
+  delete: <T>(path: string) =>
+    request<T>(path, {
+      method: 'DELETE',
+    }),
   get: <T>(path: string) =>
     request<T>(path, {
       method: 'GET',
+    }),
+  post: <T>(path: string, body: unknown) =>
+    request<T>(path, {
+      body: JSON.stringify(body),
+      method: 'POST',
     }),
   put: <T>(path: string, body: unknown) =>
     request<T>(path, {

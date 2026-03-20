@@ -1,0 +1,562 @@
+{
+  "zh-TW": {
+    "common": {
+      "back": "返回總覽",
+      "disabled": "關閉",
+      "enabled": "啟用",
+      "none": "未設定",
+      "unknownAuthor": "未知作者"
+    },
+    "help": {
+      "faqQuickStartTitle": "/faq 快速說明",
+      "settingsQuickStartTitle": "/settings 快速說明",
+      "title": "目前可用的指令"
+    },
+    "preview": {
+      "buttons": {
+        "gif": "轉 GIF",
+        "retract": "收回預覽",
+        "translate": "翻譯內容"
+      },
+      "errors": {
+        "gifDisabled": "此伺服器已停用 GIF 轉換。",
+        "gifFailed": "目前無法將這則媒體轉成 GIF。",
+        "gifNoCandidate": "這則預覽沒有可轉成 GIF 的媒體。",
+        "gifQueued": "GIF 仍在處理中，完成後我會在此頻道補上結果。",
+        "onlyOwnerCanRetract": "只有原發送者或管理員可以收回這張預覽卡。",
+        "previewSourceMissing": "找不到這張預覽卡的來源連結。",
+        "previewUnavailable": "目前無法取得這則貼文的預覽。",
+        "retractFailed": "收回預覽卡失敗。",
+        "retractNotFound": "找不到要收回的預覽卡。",
+        "translateDisabled": "此伺服器已停用翻譯功能。",
+        "translateFailed": "翻譯這則預覽失敗。",
+        "translateNoText": "這則預覽沒有可翻譯的文字。",
+        "unsupportedAction": "不支援的操作。"
+      },
+      "fields": {
+        "likes": "喜歡",
+        "replies": "回覆",
+        "reposts": "轉推"
+      },
+      "footer": {
+        "publishedAt": "發文時間",
+        "source": "來源"
+      },
+      "followUp": {
+        "gifFailed": "GIF 轉換失敗",
+        "gifReady": "GIF 已完成"
+      },
+      "gifPreviewTitle": "GIF 預覽",
+      "sensitiveHidden": "此伺服器目前未開啟 NSFW 模式，敏感媒體已隱藏。可在 /settings 中調整。",
+      "translatedLabel": "翻譯"
+    },
+    "settings": {
+      "actions": {
+        "disabledHint": "只有管理員可以修改設定",
+        "selectPlaceholder": "選擇要修改的功能",
+        "viewOnly": "目前為檢視模式"
+      },
+      "description": {
+        "features": "調整翻譯、GIF 轉換等附加功能。",
+        "language": "選擇機器人的介面語言，也會作為預設翻譯目標語言。",
+      "overview": "首頁總覽只顯示目前狀態。\n要調整設定，請先從下拉選單選擇項目。",
+        "platforms": "控制各個平台是否啟用自動預覽。",
+        "service": "調整整體自動預覽、輸出模式與敏感媒體顯示。"
+      },
+      "errors": {
+        "guildOnly": "設定面板只能在伺服器內使用。",
+        "storageUnavailable": "尚未設定 Redis，無法保存伺服器設定。",
+        "unsupportedAction": "不支援的設定操作。",
+        "viewOnly": "你目前只能查看設定，無法直接修改。"
+      },
+      "fields": {
+        "currentSettings": "目前伺服器設定",
+        "lastUpdatedAt": "最後更新時間",
+        "lastUpdatedBy": "最後更新者"
+      },
+      "languageNames": {
+        "en": "英文",
+        "ja": "日文",
+        "ko": "韓文",
+        "zh-CN": "簡體中文",
+        "zh-TW": "繁體中文"
+      },
+      "labels": {
+        "autoPreview": "網址預覽服務",
+        "bluesky": "Bluesky 預覽",
+        "gif": "GIF 轉換",
+        "language": "介面語言",
+        "nsfwMode": "敏感媒體",
+        "outputMode": "輸出模式",
+        "pixiv": "Pixiv 預覽",
+        "translate": "自動翻譯按鈕",
+        "twitter": "Twitter 預覽"
+      },
+      "modes": {
+        "embed": "嵌入式訊息",
+        "image": "純圖片輸出"
+      },
+      "sections": {
+        "features": "附加功能",
+        "language": "語言與顯示",
+        "overview": "總覽",
+        "platforms": "平台開關",
+        "service": "主要服務設定"
+      },
+      "summary": {
+        "language": "介面語言",
+        "nsfwMode": "敏感媒體",
+        "outputMode": "輸出模式"
+      },
+      "title": "設定選單"
+    }
+  },
+  "zh-CN": {
+    "common": {
+      "back": "返回总览",
+      "disabled": "关闭",
+      "enabled": "启用",
+      "none": "未设置",
+      "unknownAuthor": "未知作者"
+    },
+    "help": {
+      "faqQuickStartTitle": "/faq 快速说明",
+      "settingsQuickStartTitle": "/settings 快速说明",
+      "title": "当前可用指令"
+    },
+    "preview": {
+      "buttons": {
+        "gif": "转 GIF",
+        "retract": "收回预览",
+        "translate": "翻译内容"
+      },
+      "errors": {
+        "gifDisabled": "此服务器已停用 GIF 转换。",
+        "gifFailed": "目前无法将这则媒体转成 GIF。",
+        "gifNoCandidate": "这则预览没有可转成 GIF 的媒体。",
+        "gifQueued": "GIF 仍在处理中，完成后我会在此频道补上结果。",
+        "onlyOwnerCanRetract": "只有原发送者或管理员可以收回这张预览卡。",
+        "previewSourceMissing": "找不到这张预览卡的来源链接。",
+        "previewUnavailable": "目前无法取得这则帖文的预览。",
+        "retractFailed": "收回预览卡失败。",
+        "retractNotFound": "找不到要收回的预览卡。",
+        "translateDisabled": "此服务器已停用翻译功能。",
+        "translateFailed": "翻译这则预览失败。",
+        "translateNoText": "这则预览没有可翻译的文字。",
+        "unsupportedAction": "不支持的操作。"
+      },
+      "fields": {
+        "likes": "喜欢",
+        "replies": "回复",
+        "reposts": "转推"
+      },
+      "footer": {
+        "publishedAt": "发文时间",
+        "source": "来源"
+      },
+      "followUp": {
+        "gifFailed": "GIF 转换失败",
+        "gifReady": "GIF 已完成"
+      },
+      "gifPreviewTitle": "GIF 预览",
+      "sensitiveHidden": "此服务器目前未开启 NSFW 模式，敏感媒体已隐藏。可在 /settings 中调整。",
+      "translatedLabel": "翻译"
+    },
+    "settings": {
+      "actions": {
+        "disabledHint": "只有管理员可以修改设置",
+        "selectPlaceholder": "选择要修改的功能",
+        "viewOnly": "目前为查看模式"
+      },
+      "description": {
+        "features": "调整翻译、GIF 转换等附加功能。",
+        "language": "选择机器人的界面语言，也会作为默认翻译目标语言。",
+      "overview": "首页总览只显示当前状态。\n要调整设置，请先从下拉菜单选择项目。",
+        "platforms": "控制各个平台是否启用自动预览。",
+        "service": "调整整体自动预览、输出模式与敏感媒体显示。"
+      },
+      "errors": {
+        "guildOnly": "设置面板只能在服务器内使用。",
+        "storageUnavailable": "尚未设置 Redis，无法保存服务器设置。",
+        "unsupportedAction": "不支持的设置操作。",
+        "viewOnly": "你目前只能查看设置，无法直接修改。"
+      },
+      "fields": {
+        "currentSettings": "当前服务器设置",
+        "lastUpdatedAt": "最后更新时间",
+        "lastUpdatedBy": "最后更新者"
+      },
+      "languageNames": {
+        "en": "英文",
+        "ja": "日文",
+        "ko": "韩文",
+        "zh-CN": "简体中文",
+        "zh-TW": "繁体中文"
+      },
+      "labels": {
+        "autoPreview": "网址预览服务",
+        "bluesky": "Bluesky 预览",
+        "gif": "GIF 转换",
+        "language": "界面语言",
+        "nsfwMode": "敏感媒体",
+        "outputMode": "输出模式",
+        "pixiv": "Pixiv 预览",
+        "translate": "自动翻译按钮",
+        "twitter": "Twitter 预览"
+      },
+      "modes": {
+        "embed": "嵌入式消息",
+        "image": "纯图片输出"
+      },
+      "sections": {
+        "features": "附加功能",
+        "language": "语言与显示",
+        "overview": "总览",
+        "platforms": "平台开关",
+        "service": "主要服务设置"
+      },
+      "summary": {
+        "language": "界面语言",
+        "nsfwMode": "敏感媒体",
+        "outputMode": "输出模式"
+      },
+      "title": "设置菜单"
+    }
+  },
+  "en": {
+    "common": {
+      "back": "Back",
+      "disabled": "Disabled",
+      "enabled": "Enabled",
+      "none": "Not set",
+      "unknownAuthor": "Unknown author"
+    },
+    "help": {
+      "faqQuickStartTitle": "/faq quick start",
+      "settingsQuickStartTitle": "/settings quick start",
+      "title": "Available commands"
+    },
+    "preview": {
+      "buttons": {
+        "gif": "GIF",
+        "retract": "Retract",
+        "translate": "Translate"
+      },
+      "errors": {
+        "gifDisabled": "GIF conversion is disabled for this server.",
+        "gifFailed": "Failed to convert this media to GIF.",
+        "gifNoCandidate": "This preview has no GIF-convertible media.",
+        "gifQueued": "GIF conversion is still processing. I will post the result in this channel once ready.",
+        "onlyOwnerCanRetract": "Only the original requester or admins can retract this preview card.",
+        "previewSourceMissing": "Preview source URL not found on this card.",
+        "previewUnavailable": "Unable to load this preview right now.",
+        "retractFailed": "Failed to retract this preview card.",
+        "retractNotFound": "Unable to locate this preview message.",
+        "translateDisabled": "Translate is disabled for this server.",
+        "translateFailed": "Failed to translate this preview.",
+        "translateNoText": "This preview has no text to translate.",
+        "unsupportedAction": "Unsupported action."
+      },
+      "fields": {
+        "likes": "Likes",
+        "replies": "Replies",
+        "reposts": "Reposts"
+      },
+      "footer": {
+        "publishedAt": "Published",
+        "source": "Source"
+      },
+      "followUp": {
+        "gifFailed": "GIF conversion failed",
+        "gifReady": "GIF ready"
+      },
+      "gifPreviewTitle": "GIF Preview",
+      "sensitiveHidden": "Sensitive media is hidden for this guild. Enable NSFW mode in /settings to show attachments.",
+      "translatedLabel": "Translated"
+    },
+    "settings": {
+      "actions": {
+        "disabledHint": "Only admins can change settings",
+        "selectPlaceholder": "Choose a setting section",
+        "viewOnly": "View only"
+      },
+      "description": {
+        "features": "Adjust translate, GIF conversion, and related options.",
+        "language": "Choose the bot UI language. It also becomes the default translate target.",
+        "overview": "The home overview only shows current status.\nUse the select menu below to enter a settings section.",
+        "platforms": "Enable or disable auto preview per platform.",
+        "service": "Control auto preview, output mode, and sensitive media display."
+      },
+      "errors": {
+        "guildOnly": "Settings are only available inside a server.",
+        "storageUnavailable": "Guild settings storage is not configured yet.",
+        "unsupportedAction": "Unsupported settings action.",
+        "viewOnly": "You can view these settings, but only admins can change them."
+      },
+      "fields": {
+        "currentSettings": "Current Settings",
+        "lastUpdatedAt": "Last Updated At",
+        "lastUpdatedBy": "Last Updated By"
+      },
+      "languageNames": {
+        "en": "English",
+        "ja": "Japanese",
+        "ko": "Korean",
+        "zh-CN": "Simplified Chinese",
+        "zh-TW": "Traditional Chinese"
+      },
+      "labels": {
+        "autoPreview": "Auto Preview",
+        "bluesky": "Bluesky Preview",
+        "gif": "GIF Conversion",
+        "language": "UI Language",
+        "nsfwMode": "Sensitive Media",
+        "outputMode": "Output Mode",
+        "pixiv": "Pixiv Preview",
+        "translate": "Translate Button",
+        "twitter": "Twitter Preview"
+      },
+      "modes": {
+        "embed": "Embed",
+        "image": "Image"
+      },
+      "sections": {
+        "features": "Features",
+        "language": "Language",
+        "overview": "Overview",
+        "platforms": "Platforms",
+        "service": "Service"
+      },
+      "summary": {
+        "language": "UI Language",
+        "nsfwMode": "Sensitive Media",
+        "outputMode": "Output Mode"
+      },
+      "title": "Settings"
+    }
+  },
+  "ja": {
+    "common": {
+      "back": "概要へ戻る",
+      "disabled": "無効",
+      "enabled": "有効",
+      "none": "未設定",
+      "unknownAuthor": "不明な投稿者"
+    },
+    "help": {
+      "faqQuickStartTitle": "/faq クイックガイド",
+      "settingsQuickStartTitle": "/settings クイックガイド",
+      "title": "利用可能なコマンド"
+    },
+    "preview": {
+      "buttons": {
+        "gif": "GIF化",
+        "retract": "プレビューを削除",
+        "translate": "翻訳"
+      },
+      "errors": {
+        "gifDisabled": "このサーバーでは GIF 変換が無効です。",
+        "gifFailed": "このメディアを GIF に変換できませんでした。",
+        "gifNoCandidate": "このプレビューには GIF 化できるメディアがありません。",
+        "gifQueued": "GIF 変換はまだ処理中です。完了したらこのチャンネルに送信します。",
+        "onlyOwnerCanRetract": "元の送信者または管理者のみ、このプレビューを削除できます。",
+        "previewSourceMissing": "このカードの元リンクが見つかりません。",
+        "previewUnavailable": "現在この投稿のプレビューを取得できません。",
+        "retractFailed": "プレビューの削除に失敗しました。",
+        "retractNotFound": "削除対象のプレビューが見つかりません。",
+        "translateDisabled": "このサーバーでは翻訳が無効です。",
+        "translateFailed": "このプレビューの翻訳に失敗しました。",
+        "translateNoText": "翻訳できる本文がありません。",
+        "unsupportedAction": "未対応の操作です。"
+      },
+      "fields": {
+        "likes": "いいね",
+        "replies": "返信",
+        "reposts": "再投稿"
+      },
+      "footer": {
+        "publishedAt": "投稿時間",
+        "source": "出典"
+      },
+      "followUp": {
+        "gifFailed": "GIF 変換に失敗しました",
+        "gifReady": "GIF の準備ができました"
+      },
+      "gifPreviewTitle": "GIF プレビュー",
+      "sensitiveHidden": "このサーバーでは NSFW モードが無効のため、センシティブなメディアは非表示です。/settings で変更できます。",
+      "translatedLabel": "翻訳"
+    },
+    "settings": {
+      "actions": {
+        "disabledHint": "管理者のみ設定を変更できます",
+        "selectPlaceholder": "変更する項目を選択",
+        "viewOnly": "閲覧のみ"
+      },
+      "description": {
+        "features": "翻訳や GIF 変換などの追加機能を調整します。",
+        "language": "Bot の表示言語を選択します。翻訳の既定言語にも使われます。",
+        "overview": "ホーム概要では現在の状態のみ表示されます。\n変更したい場合は下の選択メニューから進んでください。",
+        "platforms": "プラットフォームごとの自動プレビューを切り替えます。",
+        "service": "自動プレビュー全体、出力形式、センシティブメディア表示を調整します。"
+      },
+      "errors": {
+        "guildOnly": "設定パネルはサーバー内でのみ利用できます。",
+        "storageUnavailable": "Redis が未設定のため、サーバー設定を保存できません。",
+        "unsupportedAction": "未対応の設定操作です。",
+        "viewOnly": "現在は設定を閲覧できますが、変更できるのは管理者のみです。"
+      },
+      "fields": {
+        "currentSettings": "現在のサーバー設定",
+        "lastUpdatedAt": "最終更新日時",
+        "lastUpdatedBy": "最終更新者"
+      },
+      "languageNames": {
+        "en": "英語",
+        "ja": "日本語",
+        "ko": "韓国語",
+        "zh-CN": "簡体字中国語",
+        "zh-TW": "繁体字中国語"
+      },
+      "labels": {
+        "autoPreview": "自動プレビュー",
+        "bluesky": "Bluesky プレビュー",
+        "gif": "GIF 変換",
+        "language": "表示言語",
+        "nsfwMode": "センシティブメディア",
+        "outputMode": "出力形式",
+        "pixiv": "Pixiv プレビュー",
+        "translate": "翻訳ボタン",
+        "twitter": "Twitter プレビュー"
+      },
+      "modes": {
+        "embed": "埋め込み",
+        "image": "画像"
+      },
+      "sections": {
+        "features": "追加機能",
+        "language": "言語",
+        "overview": "概要",
+        "platforms": "プラットフォーム",
+        "service": "主要設定"
+      },
+      "summary": {
+        "language": "表示言語",
+        "nsfwMode": "センシティブメディア",
+        "outputMode": "出力形式"
+      },
+      "title": "設定メニュー"
+    }
+  },
+  "ko": {
+    "common": {
+      "back": "개요로 돌아가기",
+      "disabled": "비활성화",
+      "enabled": "활성화",
+      "none": "설정 안 됨",
+      "unknownAuthor": "알 수 없는 작성자"
+    },
+    "help": {
+      "faqQuickStartTitle": "/faq 빠른 안내",
+      "settingsQuickStartTitle": "/settings 빠른 안내",
+      "title": "사용 가능한 명령어"
+    },
+    "preview": {
+      "buttons": {
+        "gif": "GIF 변환",
+        "retract": "미리보기 회수",
+        "translate": "번역"
+      },
+      "errors": {
+        "gifDisabled": "이 서버에서는 GIF 변환이 비활성화되어 있습니다.",
+        "gifFailed": "이 미디어를 GIF로 변환하지 못했습니다.",
+        "gifNoCandidate": "이 미리보기에는 GIF로 변환할 수 있는 미디어가 없습니다.",
+        "gifQueued": "GIF 변환이 아직 진행 중입니다. 완료되면 이 채널에 다시 보냅니다.",
+        "onlyOwnerCanRetract": "원래 요청자 또는 관리자만 이 미리보기를 회수할 수 있습니다.",
+        "previewSourceMissing": "이 카드의 원본 링크를 찾을 수 없습니다.",
+        "previewUnavailable": "지금은 이 게시물의 미리보기를 가져올 수 없습니다.",
+        "retractFailed": "미리보기를 회수하지 못했습니다.",
+        "retractNotFound": "회수할 미리보기를 찾지 못했습니다.",
+        "translateDisabled": "이 서버에서는 번역이 비활성화되어 있습니다.",
+        "translateFailed": "이 미리보기를 번역하지 못했습니다.",
+        "translateNoText": "번역할 텍스트가 없습니다.",
+        "unsupportedAction": "지원하지 않는 작업입니다."
+      },
+      "fields": {
+        "likes": "좋아요",
+        "replies": "답글",
+        "reposts": "재게시"
+      },
+      "footer": {
+        "publishedAt": "게시 시간",
+        "source": "출처"
+      },
+      "followUp": {
+        "gifFailed": "GIF 변환 실패",
+        "gifReady": "GIF 준비 완료"
+      },
+      "gifPreviewTitle": "GIF 미리보기",
+      "sensitiveHidden": "이 서버에서는 NSFW 모드가 꺼져 있어 민감한 미디어를 숨깁니다. /settings 에서 변경할 수 있습니다.",
+      "translatedLabel": "번역"
+    },
+    "settings": {
+      "actions": {
+        "disabledHint": "관리자만 설정을 변경할 수 있습니다",
+        "selectPlaceholder": "수정할 항목 선택",
+        "viewOnly": "읽기 전용"
+      },
+      "description": {
+        "features": "번역, GIF 변환 같은 추가 기능을 조정합니다.",
+        "language": "봇 UI 언어를 선택합니다. 기본 번역 언어로도 사용됩니다.",
+        "overview": "홈 개요에는 현재 상태만 표시됩니다.\n변경하려면 아래 선택 메뉴에서 항목을 고르세요.",
+        "platforms": "플랫폼별 자동 미리보기를 켜거나 끕니다.",
+        "service": "자동 미리보기 전체, 출력 모드, 민감한 미디어 표시를 조정합니다."
+      },
+      "errors": {
+        "guildOnly": "설정 패널은 서버 안에서만 사용할 수 있습니다.",
+        "storageUnavailable": "Redis가 설정되지 않아 서버 설정을 저장할 수 없습니다.",
+        "unsupportedAction": "지원하지 않는 설정 작업입니다.",
+        "viewOnly": "현재는 설정을 볼 수만 있고 변경은 관리자만 가능합니다."
+      },
+      "fields": {
+        "currentSettings": "현재 서버 설정",
+        "lastUpdatedAt": "마지막 업데이트 시간",
+        "lastUpdatedBy": "마지막 업데이트한 사람"
+      },
+      "languageNames": {
+        "en": "영어",
+        "ja": "일본어",
+        "ko": "한국어",
+        "zh-CN": "간체 중국어",
+        "zh-TW": "번체 중국어"
+      },
+      "labels": {
+        "autoPreview": "자동 미리보기",
+        "bluesky": "Bluesky 미리보기",
+        "gif": "GIF 변환",
+        "language": "UI 언어",
+        "nsfwMode": "민감한 미디어",
+        "outputMode": "출력 방식",
+        "pixiv": "Pixiv 미리보기",
+        "translate": "번역 버튼",
+        "twitter": "Twitter 미리보기"
+      },
+      "modes": {
+        "embed": "임베드",
+        "image": "이미지"
+      },
+      "sections": {
+        "features": "추가 기능",
+        "language": "언어",
+        "overview": "개요",
+        "platforms": "플랫폼",
+        "service": "주요 설정"
+      },
+      "summary": {
+        "language": "UI 언어",
+        "nsfwMode": "민감한 미디어",
+        "outputMode": "출력 방식"
+      },
+      "title": "설정 메뉴"
+    }
+  }
+}

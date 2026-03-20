@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "gateway:listen": "node worker/gateway-listener/index.mjs",
+    "gateway:prepare-discloud": "node scripts/prepare-discloud-listener.mjs",
+    "worker:smoke": "node scripts/smoke-media-worker.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

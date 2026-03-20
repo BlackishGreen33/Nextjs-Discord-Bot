@@ -3,7 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const verifyInteractionRequestMock = vi.fn();
 const getCommandsMock = vi.fn();
-const handleMediaButtonInteractionMock = vi.fn();
+const handleMediaComponentInteractionMock = vi.fn();
+const afterMock = vi.fn();
+
+vi.mock('next/server', async () => {
+  const actual =
+    await vi.importActual<typeof import('next/server')>('next/server');
+
+  return {
+    ...actual,
+    after: (...args: unknown[]) => afterMock(...args),
+  };
+});
 
 vi.mock('@/common/configs', () => ({
   PUBLIC_KEY: 'test-public-key',
@@ -16,8 +27,8 @@ vi.mock('@/common/utils', () => ({
     requestId: 'req-id',
   }),
   getCommands: (...args: unknown[]) => getCommandsMock(...args),
-  handleMediaButtonInteraction: (...args: unknown[]) =>
-    handleMediaButtonInteractionMock(...args),
+  handleMediaComponentInteraction: (...args: unknown[]) =>
+    handleMediaComponentInteractionMock(...args),
   verifyInteractionRequest: (...args: unknown[]) =>
     verifyInteractionRequestMock(...args),
 }));
@@ -114,7 +125,7 @@ describe('POST /api/discord-bot/interactions', () => {
       },
       isValid: true,
     });
-    handleMediaButtonInteractionMock.mockResolvedValue({
+    handleMediaComponentInteractionMock.mockResolvedValue({
       data: { content: 'Download ready' },
       type: 4,
     });
@@ -128,7 +139,12 @@ describe('POST /api/discord-bot/interactions', () => {
     expect(response.status).toBe(200);
     expect(body.type).toBe(4);
     expect(body.data.content).toBe('Download ready');
-    expect(handleMediaButtonInteractionMock).toHaveBeenCalledTimes(1);
+    expect(handleMediaComponentInteractionMock).toHaveBeenCalledTimes(1);
+    expect(handleMediaComponentInteractionMock.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        scheduleBackgroundTask: expect.any(Function),
+      })
+    );
     expect(getCommandsMock).not.toHaveBeenCalled();
   });
 

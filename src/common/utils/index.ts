@@ -1,20 +1,24 @@
 export { extractBearerToken, timingSafeEqualString } from './auth';
 export { discord_api, default as fetchBotCommands } from './discord-api';
 export { default as getCommands } from './getCommands';
-export { handleMediaButtonInteraction } from './media-component-handler';
+export { handleMediaComponentInteraction } from './media-component-handler';
 export {
-  buildMediaButtonCustomId,
+  buildPreviewActionCustomId,
   extractFirstSupportedMediaUrl,
   inferPlatformFromUrl,
   isSupportedMediaDomain,
   normalizeMediaUrl,
-  parseMediaButtonCustomId,
+  parseBlueskyPostUrl,
+  parsePixivArtworkId,
+  parsePreviewActionCustomId,
+  parseTwitterStatusId,
 } from './media-link';
 export {
-  createMediaDownload,
+  createMediaGif,
   getMediaPreview,
   isMediaWorkerConfigured,
-  type MediaDownloadResult,
+  translateMediaText,
+  type MediaGifResult,
   type MediaPreview,
 } from './media-worker';
 export { createRequestLogger } from './request-logger';

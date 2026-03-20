@@ -1,15 +1,14 @@
-const MEDIA_BUTTON_PREFIX = 'dl:v1';
+const PREVIEW_ACTION_PREFIX = 'pv:v1';
+const URL_REGEX = /https?:\/\/[^\s<>"']+/gi;
 
-type MediaButtonAction = 'audio' | 'delete' | 'video';
+export type PreviewAction = 'gif' | 'retract' | 'translate';
 
 const DEFAULT_ALLOWED_DOMAINS = [
-  'x.com',
+  'bsky.app',
+  'pixiv.net',
   'twitter.com',
-  'youtube.com',
-  'youtu.be',
-  'instagram.com',
-  'facebook.com',
-  'fb.watch',
+  'www.pixiv.net',
+  'x.com',
 ];
 
 const getAllowedDomains = () => {
@@ -55,8 +54,6 @@ export const normalizeMediaUrl = (value: string) => {
   return parsed.toString();
 };
 
-const URL_REGEX = /https?:\/\/[^\s<>"']+/gi;
-
 export const extractFirstSupportedMediaUrl = (content: string) => {
   const candidates = content.match(URL_REGEX) ?? [];
 
@@ -83,24 +80,12 @@ export const inferPlatformFromUrl = (url: string) => {
       return 'Twitter';
     }
 
-    if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
-      return 'YouTube';
+    if (hostname === 'pixiv.net' || hostname.endsWith('.pixiv.net')) {
+      return 'Pixiv';
     }
 
-    if (hostname === 'youtu.be' || hostname.endsWith('.youtu.be')) {
-      return 'YouTube';
-    }
-
-    if (hostname === 'instagram.com' || hostname.endsWith('.instagram.com')) {
-      return 'Instagram';
-    }
-
-    if (hostname === 'facebook.com' || hostname.endsWith('.facebook.com')) {
-      return 'Facebook';
-    }
-
-    if (hostname === 'fb.watch' || hostname.endsWith('.fb.watch')) {
-      return 'Facebook';
+    if (hostname === 'bsky.app' || hostname.endsWith('.bsky.app')) {
+      return 'Bluesky';
     }
 
     return hostname;
@@ -109,34 +94,97 @@ export const inferPlatformFromUrl = (url: string) => {
   }
 };
 
-export const buildMediaButtonCustomId = (
-  action: MediaButtonAction,
-  ownerUserId: string
-) => `${MEDIA_BUTTON_PREFIX}:${action}:${ownerUserId}`;
+export const parseTwitterStatusId = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    const statusIndex = segments.findIndex((segment) => segment === 'status');
 
-export const parseMediaButtonCustomId = (value: string) => {
+    if (statusIndex === -1) {
+      return null;
+    }
+
+    return segments[statusIndex + 1] ?? null;
+  } catch {
+    return null;
+  }
+};
+
+export const parsePixivArtworkId = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const pathnameMatch = parsed.pathname.match(/\/artworks\/(\d+)/);
+
+    if (pathnameMatch?.[1]) {
+      return pathnameMatch[1];
+    }
+
+    const queryValue = parsed.searchParams.get('illust_id');
+    return queryValue && /^\d+$/.test(queryValue) ? queryValue : null;
+  } catch {
+    return null;
+  }
+};
+
+export const parseBlueskyPostUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean);
+
+    if (segments.length < 4) {
+      return null;
+    }
+
+    if (segments[0] !== 'profile' || segments[2] !== 'post') {
+      return null;
+    }
+
+    const handle = segments[1];
+    const rkey = segments[3];
+
+    if (!handle || !rkey) {
+      return null;
+    }
+
+    return {
+      handle,
+      rkey,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const buildPreviewActionCustomId = (
+  action: PreviewAction,
+  ownerUserId: string,
+  sourceMessageId: string
+) => `${PREVIEW_ACTION_PREFIX}:${action}:${ownerUserId}:${sourceMessageId}`;
+
+export const parsePreviewActionCustomId = (value: string) => {
   const parts = value.split(':');
 
-  if (parts.length !== 4) {
+  if (parts.length !== 5) {
     return null;
   }
 
-  const [prefixA, prefixB, action, ownerUserId] = parts;
+  const [prefixA, prefixB, action, ownerUserId, sourceMessageId] = parts;
 
-  if (`${prefixA}:${prefixB}` !== MEDIA_BUTTON_PREFIX) {
+  if (`${prefixA}:${prefixB}` !== PREVIEW_ACTION_PREFIX) {
     return null;
   }
 
-  if (!['video', 'audio', 'delete'].includes(action)) {
+  if (!['translate', 'gif', 'retract'].includes(action)) {
     return null;
   }
 
-  if (!ownerUserId || ownerUserId.trim().length === 0) {
+  if (!ownerUserId || !sourceMessageId) {
     return null;
   }
 
   return {
-    action: action as MediaButtonAction,
+    action: action as PreviewAction,
     ownerUserId,
+    sourceMessageId,
   };
 };
