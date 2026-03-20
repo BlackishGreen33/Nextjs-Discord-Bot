@@ -336,7 +336,7 @@ Recommended MVP setup:
     │   ├── preview-attachments.mjs
     │   ├── preview-attachments.test.ts
     │   └── ui-text.mjs
-    └── render-fallback-api/
+    └── render-gif-api/
         ├── README.md
         ├── Dockerfile
         ├── app.py

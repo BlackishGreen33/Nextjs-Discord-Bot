@@ -39,7 +39,7 @@ Endpoints:
 ## Local Run
 
 ```bash
-cd worker/render-fallback-api
+cd worker/render-gif-api
 docker build -t render-gif-api .
 docker run --rm -p 10000:10000 \
   -e GIF_API_TOKEN=your-token \
@@ -49,7 +49,7 @@ docker run --rm -p 10000:10000 \
 ## Render Deploy
 
 1. Create a new Render **Web Service**
-2. Root directory: `worker/render-fallback-api`
+2. Root directory: `worker/render-gif-api`
 3. Runtime: **Docker**
 4. Set `GIF_API_TOKEN`
 5. Deploy and verify `GET /health`
