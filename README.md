@@ -233,8 +233,8 @@ Recommended MVP setup:
 
 ## Runbooks
 
-- [Render Gateway Listener Runbook](docs/runbooks/render-gateway-listener.md)
-- [Production Register-Commands Runbook](docs/runbooks/register-commands.md)
+- [Render Gateway Listener Runbook](docs/en/runbooks/render-gateway-listener.md)
+- [Production Register-Commands Runbook](docs/en/runbooks/register-commands.md)
 
 ## Development Commands
 
@@ -259,9 +259,18 @@ Recommended MVP setup:
 ├── README-zhcn.md
 ├── AGENTS.md
 ├── docs/
-│   └── runbooks/
-│       ├── register-commands.md
-│       └── render-gateway-listener.md
+│   ├── en/
+│   │   └── runbooks/
+│   │       ├── register-commands.md
+│   │       └── render-gateway-listener.md
+│   ├── zhtw/
+│   │   └── runbooks/
+│   │       ├── register-commands.md
+│   │       └── render-gateway-listener.md
+│   └── zhcn/
+│       └── runbooks/
+│           ├── register-commands.md
+│           └── render-gateway-listener.md
 ├── public/
 │   └── favicon.ico
 ├── scripts/

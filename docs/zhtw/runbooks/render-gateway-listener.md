@@ -1,12 +1,12 @@
-# Render Gateway Listener Runbook
+# Render Gateway Listener 維運手冊
 
-> 適用對象：維運目前這個 Discord Bot MVP 的操作人員。
+> 語言： [English](../../en/runbooks/render-gateway-listener.md) · [繁體中文](./render-gateway-listener.md) · [简体中文](../../zhcn/runbooks/render-gateway-listener.md)
 
 ## 目的
 
-本文件記錄 **Render Web Service** 版 Gateway listener 的推薦 MVP 維運流程。
+本文件記錄使用 **Render Web Service** 執行 Discord Gateway listener 的推薦 MVP 維運流程。
 
-這條路線的責任是：
+listener 的責任是：
 
 - 維持 Discord Gateway 常駐連線
 - 監聽 `MESSAGE_CREATE`
@@ -17,21 +17,21 @@
 
 - 平台：Render Web Service
 - Health Check Path：`/healthz`
-- 外部保活：可用 UptimeRobot 或同類服務定期 `GET /healthz`
+- 外部保活：UptimeRobot 或同類服務定期 `GET /healthz`
 
 > [!IMPORTANT]
-> 不要把專案文件綁定到單一服務名稱、固定網址或單一 region。對開源專案來說，應記錄的是「判斷標準」與「部署原則」。
+> 不要把專案文件綁定到單一服務名稱、固定網址或單一 region。對開源專案來說，應記錄的是部署原則與驗證標準。
 
 ## Region 選擇原則
 
-若某個 region 的 listener 實測出現：
+若某個 region 在實測時出現：
 
 - `restProbe.status = 429`
 - 回應摘要包含 `Access denied | discord.com used Cloudflare to restrict ...`
 
-這表示問題通常不在應用程式本身，而是在該 region 的出站網路路徑被 Discord / Cloudflare 限制。
+通常代表問題不在應用程式本身，而是在該 region 的出站網路路徑被 Discord / Cloudflare 限制。
 
-合格的 region 應至少滿足：
+合格的 region 至少應滿足：
 
 - `ready = true`
 - `gatewayPhase = "ready"`
@@ -60,7 +60,7 @@
 - `gatewayPhase`
   - `ready`：正常
   - `login_pending`：登入流程尚未完成
-  - `login_timeout`：登入卡住超時
+  - `login_timeout`：登入流程卡住超時
   - `login_failed`：token 或登入流程直接失敗
   - `shard_disconnected`：Gateway 被斷線
 - `gatewayLastError`
@@ -79,7 +79,7 @@
 - Interval：`14 minutes`
 
 > [!NOTE]
-> UptimeRobot 只能降低 Render free service 休眠造成的冷啟動影響，不能解決 Discord / Cloudflare 對特定 Render region 出站流量的限制。
+> 外部保活只能降低免費服務休眠造成的冷啟動影響，不能解決 Discord / Cloudflare 對特定 region 出站流量的限制。
 
 ## 部署更新流程
 
@@ -144,7 +144,7 @@ Render Web Service 會依設定 branch 自動 redeploy。
 
 ### 症狀：`restProbe.status = 429` 且摘要含 `Access denied`
 
-這通常表示當前 Render region / egress IP 被 Discord / Cloudflare 擋住。
+通常表示當前 Render region / egress IP 被 Discord / Cloudflare 擋住。
 
 處理方式：
 
@@ -156,7 +156,7 @@ Render Web Service 會依設定 branch 自動 redeploy。
 
 - 不要同時保留多個可正常登入的 Gateway listener，否則可能重複回卡
 - 若同時存在其他本機或雲端 listener，正式 listener 上線後應停掉舊實例
-- `/healthz` 是目前判斷 listener 是否真正可用的第一指標，不要只看 Render service 是否顯示 running
+- `/healthz` 是判斷 listener 是否真正可用的第一指標，不要只看 Render service 是否顯示 running
 
 ## 參考文件
 

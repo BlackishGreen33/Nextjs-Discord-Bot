@@ -233,8 +233,8 @@ pnpm gateway:listen
 
 ## Runbooks
 
-- [Render Gateway Listener Runbook](docs/runbooks/render-gateway-listener.md)
-- [Production Register-Commands Runbook](docs/runbooks/register-commands.md)
+- [Render Gateway Listener Runbook](docs/zhtw/runbooks/render-gateway-listener.md)
+- [Production Register-Commands Runbook](docs/zhtw/runbooks/register-commands.md)
 
 ## 開發指令
 
@@ -259,9 +259,18 @@ pnpm gateway:listen
 ├── README-zhcn.md
 ├── AGENTS.md
 ├── docs/
-│   └── runbooks/
-│       ├── register-commands.md
-│       └── render-gateway-listener.md
+│   ├── en/
+│   │   └── runbooks/
+│   │       ├── register-commands.md
+│   │       └── render-gateway-listener.md
+│   ├── zhtw/
+│   │   └── runbooks/
+│   │       ├── register-commands.md
+│   │       └── render-gateway-listener.md
+│   └── zhcn/
+│       └── runbooks/
+│           ├── register-commands.md
+│           └── render-gateway-listener.md
 ├── public/
 │   └── favicon.ico
 ├── scripts/

@@ -1,4 +1,6 @@
-# Production Register-Commands Runbook
+# 正式環境 Register-Commands 維運手冊
+
+> 語言： [English](../../en/runbooks/register-commands.md) · [繁體中文](./register-commands.md) · [简体中文](../../zhcn/runbooks/register-commands.md)
 
 ## 目的
 

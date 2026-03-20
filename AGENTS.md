@@ -1,132 +1,131 @@
 # AGENTS.md
 
-本文件僅記錄目前可由 repo 實作、專案內文件與現有 runbook 直接驗證的工作流程，供維護與自動化執行時遵循。
+This file records only workflows, commands, and runbooks that can be verified directly from the current repository state.
 
-## 核心原則
+## Core Principles
 
-- 只依據 repo 目前可驗證的實作、指令與文件行事。
-- 變更優先最小範圍，避免改動無關檔案。
-- 若資訊不足，先標記 `TODO`，不要臆測外部平台行為。
-- 外部部署狀態若會變動，應寫入 runbook，不硬編碼在核心規範中。
+- Act only on implementations, commands, and documents that are verifiable in this repo.
+- Prefer the smallest possible change set.
+- If information is missing, add a `TODO` instead of guessing external platform behavior.
+- If deployment details may change over time, keep them in runbooks rather than hardcoding them into core repo guidance.
 
-## 專案與環境
+## Project and Environment
 
-- 專案：Next.js App Router（TypeScript）Discord Bot
-- Node.js：20+
-- 套件管理：pnpm 10+
-- 主要 HTTP 路由：
+- Project: Next.js App Router Discord Bot written in TypeScript
+- Node.js: 20+
+- Package manager: pnpm 10+
+- Main HTTP routes:
   - `POST /api/discord-bot/interactions`
   - `POST /api/discord-bot/register-commands`
   - `GET /api/discord-bot/debug`
 
-## 本專案已驗證指令
+## Verified Commands
 
-- `pnpm install`：安裝依賴
-- `pnpm dev`：啟動本機開發伺服器
-- `pnpm build`：建立 production build
-- `pnpm start`：啟動 production server
-- `pnpm lint`：執行 ESLint
-- `pnpm typecheck`：執行 `tsc --noEmit`
-- `pnpm test`：執行 Vitest（`vitest run`）
-- `pnpm prettier`：執行 `prettier --write .`
-- `pnpm gateway:listen`：啟動 Discord Gateway listener（自動連結卡片）
-- `pnpm worker:smoke`：檢查 live media worker 基本功能
+- `pnpm install`: install dependencies
+- `pnpm dev`: start the local development server
+- `pnpm build`: build the production bundle
+- `pnpm start`: start the production server
+- `pnpm lint`: run ESLint
+- `pnpm typecheck`: run `tsc --noEmit`
+- `pnpm test`: run Vitest (`vitest run`)
+- `pnpm prettier`: run `prettier --write .`
+- `pnpm gateway:listen`: start the Discord Gateway listener for auto preview cards
+- `pnpm worker:smoke`: run a live media worker smoke test
 
-## 目前實作重點
+## Current Functional Areas
 
 ### 1. Slash Commands
 
-目前註冊的核心指令：
+Currently registered core commands:
 
 - `/ping`
 - `/help`
 - `/faq`
 - `/settings`
 
-### 2. Interaction 分派
+### 2. Interaction Dispatch
 
-- `POST /api/discord-bot/interactions` 先驗簽
-- `Ping` 互動回傳 pong
-- Slash command 由 `src/commands` 分派
-- Message component 由 `src/common/utils/media-component-handler.ts` 分派
-- 目前 component 行為以：
-  - settings 面板
-  - preview card 的 translate / gif / retract
-    為主
+- `POST /api/discord-bot/interactions` verifies Discord signatures first
+- `Ping` interactions return `pong`
+- Slash commands are dispatched from `src/commands`
+- Message components are dispatched from `src/common/utils/media-component-handler.ts`
+- Current component flows are focused on:
+  - the settings panel
+  - preview card actions: translate / gif / retract
 
-### 3. 自動預覽卡片
+### 3. Automatic Preview Cards
 
-- 自動預覽不是 Next.js webhook 直接處理
-- 需額外啟動 `worker/gateway-listener/index.mjs`
-- 支援平台：
+- Auto preview is not handled directly by the Next.js webhook routes
+- It requires `worker/gateway-listener/index.mjs` to be running separately
+- Supported platforms:
   - X / Twitter
   - Pixiv
   - Bluesky
-- 預覽資料、翻譯、GIF 任務會經過外部 media worker
+- Preview metadata, translation, and GIF tasks go through the external media worker
 
-### 4. 儲存層
+### 4. Storage Layer
 
-- Guild 設定與 FAQ 目前使用 Upstash Redis
-- 若 Redis 不可用：
-  - FAQ 功能不可用
-  - listener 對 guild 設定會回退到預設值
+- Guild settings and FAQ data use Upstash Redis
+- If Redis is unavailable:
+  - FAQ features are unavailable
+  - listener guild settings fall back to defaults
 
-## 既有工作流程
+## Existing Workflows
 
-### 1. 本地開發
+### 1. Local Development
 
-1. 建立 `.env.local`（參考 `.env.example`）
-2. 執行 `pnpm install`
-3. 執行 `pnpm dev`
-4. 若要測試自動預覽，另外執行 `pnpm gateway:listen`
+1. Create `.env.local` from `.env.example`
+2. Run `pnpm install`
+3. Run `pnpm dev`
+4. If you need to test auto preview locally, also run `pnpm gateway:listen`
 
-### 2. Discord 指令註冊
+### 2. Discord Command Registration
 
-1. 開發環境可由首頁按鈕觸發 `POST /api/discord-bot/register-commands`
-2. 正式環境下需帶：
+1. In development, registration can be triggered from the home page via `POST /api/discord-bot/register-commands`
+2. In production, requests must include:
    - `Authorization: Bearer <REGISTER_COMMANDS_KEY>`
-3. 註冊端點有 rate limit：每 IP 每分鐘最多 `5` 次
-4. 正式操作流程見：
-   - `docs/runbooks/register-commands.md`
+3. The endpoint is rate-limited to `5` requests per IP per minute
+4. The verified production procedure is documented in:
+   - `docs/en/runbooks/register-commands.md`
 
-### 3. Gateway Listener 維運
+### 3. Gateway Listener Operations
 
-1. 需在 Discord Developer Portal 開啟 **Message Content Intent**
-2. 若 `PORT` 存在，listener 會額外暴露：
+1. Enable **Message Content Intent** in the Discord Developer Portal
+2. If `PORT` is set, the listener also exposes:
    - `/`
    - `/health`
    - `/healthz`
-3. 正式 MVP 的雲端 listener 維運流程見：
-   - `docs/runbooks/render-gateway-listener.md`
-4. 目前 runbook 以 Render Web Service 為推薦 MVP 路線；實際 region 應以可通過 Discord Gateway 與 REST 探測者為準
+3. The recommended MVP cloud operations flow is documented in:
+   - `docs/en/runbooks/render-gateway-listener.md`
+4. The current runbook recommends Render Web Service as the MVP path; actual region selection should be based on successful Discord Gateway login and REST probing
 
-### 4. 除錯檢查
+### 4. Debug Checks
 
-1. `GET /api/discord-bot/debug` 僅非 production 可用
-2. 需帶：
+1. `GET /api/discord-bot/debug` is available only outside production
+2. It requires:
    - `Authorization: Bearer <REGISTER_COMMANDS_KEY>`
-3. 回傳環境變數就緒狀態與 Discord API 健康檢查
+3. It returns environment readiness and Discord API health information
 
-### 5. 提交前與 CI
+### 5. Pre-commit and CI
 
-- Husky `pre-commit`：
+- Husky `pre-commit`:
   - `pnpm exec eslint --fix .`
   - `pnpm exec prettier --write "**/*.{ts,tsx,js,jsx}" --log-level error`
   - `git add -u`
-- GitHub Actions（push/PR 到 `main`）執行：
+- GitHub Actions on push/PR to `main` run:
   - `pnpm prettier --check .`
   - `pnpm lint`
   - `pnpm typecheck`
   - `pnpm test`
 
-## 測試慣例
+## Testing Conventions
 
-- 測試框架：Vitest（`pnpm test`）
-- API 與工具函式測試檔使用 `*.test.ts`
-- Gateway listener 媒體附件行為有 `worker/gateway-listener/preview-attachments.test.ts`
+- Test framework: Vitest (`pnpm test`)
+- API and utility tests use `*.test.ts`
+- Gateway listener attachment behavior is covered by `worker/gateway-listener/preview-attachments.test.ts`
 
-## 文件與 Runbook
+## Documentation and Runbooks
 
-- 對外說明與部署總覽：`README.md`
-- Gateway listener 維運：`docs/runbooks/render-gateway-listener.md`
-- 正式指令註冊：`docs/runbooks/register-commands.md`
+- Public overview and deployment entry point: `README.md`
+- Gateway listener operations: `docs/en/runbooks/render-gateway-listener.md`
+- Production command registration: `docs/en/runbooks/register-commands.md`

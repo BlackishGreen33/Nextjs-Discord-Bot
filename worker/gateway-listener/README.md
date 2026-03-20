@@ -53,7 +53,7 @@ Choose a region that can successfully complete both:
 
 For operational details, see:
 
-- [docs/runbooks/render-gateway-listener.md](../docs/runbooks/render-gateway-listener.md)
+- [docs/en/runbooks/render-gateway-listener.md](../../docs/en/runbooks/render-gateway-listener.md)
 
 ## Permissions Checklist
 
