@@ -155,7 +155,7 @@ Render Web Service 會依設定 branch 自動 redeploy。
 ## 操作注意事項
 
 - 不要同時保留多個可正常登入的 Gateway listener，否則可能重複回卡
-- 若本機 `launchd` listener 仍在跑，雲端 listener 上線後應停掉本機版本
+- 若同時存在其他本機或雲端 listener，正式 listener 上線後應停掉舊實例
 - `/healthz` 是目前判斷 listener 是否真正可用的第一指標，不要只看 Render service 是否顯示 running
 
 ## 參考文件
