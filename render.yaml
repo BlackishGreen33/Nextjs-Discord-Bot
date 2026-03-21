@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: discord-bot-web
+    runtime: node
+    autoDeployTrigger: off
+    buildCommand: pnpm install && pnpm prisma:generate && pnpm build
+    preDeployCommand: pnpm prisma:push
+    startCommand: pnpm start
+    envVars:
+      - key: NEXT_PUBLIC_APPLICATION_ID
+        sync: false
+      - key: PUBLIC_KEY
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: REGISTER_COMMANDS_KEY
+        generateValue: true
+      - key: STORAGE_DRIVER
+        value: prisma
+      - key: DATABASE_URL
+        fromDatabase:
+          name: discord-bot-db
+          property: connectionString
+      - key: MEDIA_MODE
+        value: embedded
+      - key: GIF_MODE
+        value: disabled
+      - key: TRANSLATE_PROVIDER
+        value: disabled
+
+  - type: web
+    name: discord-bot-listener
+    runtime: node
+    autoDeployTrigger: off
+    buildCommand: pnpm install && pnpm prisma:generate
+    startCommand: pnpm gateway:listen
+    healthCheckPath: /healthz
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: STORAGE_DRIVER
+        value: prisma
+      - key: DATABASE_URL
+        fromDatabase:
+          name: discord-bot-db
+          property: connectionString
+      - key: MEDIA_MODE
+        value: embedded
+      - key: GIF_MODE
+        value: disabled
+      - key: TRANSLATE_PROVIDER
+        value: disabled
+
+databases:
+  - name: discord-bot-db
+    databaseName: discord_bot

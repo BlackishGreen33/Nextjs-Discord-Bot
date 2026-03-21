@@ -1,0 +1,3 @@
+WORKER_AUTH_TOKEN=replace-with-a-shared-bearer-token
+# GIF_API_TOKEN=optional-gif-service-token
+# TRANSLATE_API_KEY=optional-translate-provider-key
