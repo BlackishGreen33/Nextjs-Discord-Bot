@@ -262,7 +262,7 @@ export const execute: executeCommand = async (interaction) => {
 
   if (!faqStore.isAvailable()) {
     return createMessageResponse(
-      'FAQ storage is not configured. Please set Upstash Redis environment variables.',
+      'FAQ storage is not configured. Set DATABASE_URL or the Redis storage env variables.',
       true
     );
   }

@@ -59,13 +59,13 @@
       "description": {
         "features": "調整翻譯、GIF 轉換等附加功能。",
         "language": "選擇機器人的介面語言，也會作為預設翻譯目標語言。",
-      "overview": "首頁總覽只顯示目前狀態。\n要調整設定，請先從下拉選單選擇項目。",
+        "overview": "首頁總覽只顯示目前狀態。\n要調整設定，請先從下拉選單選擇項目。",
         "platforms": "控制各個平台是否啟用自動預覽。",
         "service": "調整整體自動預覽、輸出模式與敏感媒體顯示。"
       },
       "errors": {
         "guildOnly": "設定面板只能在伺服器內使用。",
-        "storageUnavailable": "尚未設定 Redis，無法保存伺服器設定。",
+        "storageUnavailable": "尚未設定儲存層，無法保存伺服器設定。",
         "unsupportedAction": "不支援的設定操作。",
         "viewOnly": "你目前只能查看設定，無法直接修改。"
       },
@@ -171,13 +171,13 @@
       "description": {
         "features": "调整翻译、GIF 转换等附加功能。",
         "language": "选择机器人的界面语言，也会作为默认翻译目标语言。",
-      "overview": "首页总览只显示当前状态。\n要调整设置，请先从下拉菜单选择项目。",
+        "overview": "首页总览只显示当前状态。\n要调整设置，请先从下拉菜单选择项目。",
         "platforms": "控制各个平台是否启用自动预览。",
         "service": "调整整体自动预览、输出模式与敏感媒体显示。"
       },
       "errors": {
         "guildOnly": "设置面板只能在服务器内使用。",
-        "storageUnavailable": "尚未设置 Redis，无法保存服务器设置。",
+        "storageUnavailable": "尚未设置存储层，无法保存服务器设置。",
         "unsupportedAction": "不支持的设置操作。",
         "viewOnly": "你目前只能查看设置，无法直接修改。"
       },
@@ -401,7 +401,7 @@
       },
       "errors": {
         "guildOnly": "設定パネルはサーバー内でのみ利用できます。",
-        "storageUnavailable": "Redis が未設定のため、サーバー設定を保存できません。",
+        "storageUnavailable": "保存先ストレージが未設定のため、サーバー設定を保存できません。",
         "unsupportedAction": "未対応の設定操作です。",
         "viewOnly": "現在は設定を閲覧できますが、変更できるのは管理者のみです。"
       },
@@ -513,7 +513,7 @@
       },
       "errors": {
         "guildOnly": "설정 패널은 서버 안에서만 사용할 수 있습니다.",
-        "storageUnavailable": "Redis가 설정되지 않아 서버 설정을 저장할 수 없습니다.",
+        "storageUnavailable": "저장소가 설정되지 않아 서버 설정을 저장할 수 없습니다.",
         "unsupportedAction": "지원하지 않는 설정 작업입니다.",
         "viewOnly": "현재는 설정을 볼 수만 있고 변경은 관리자만 가능합니다."
       },

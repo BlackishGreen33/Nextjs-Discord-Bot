@@ -13,13 +13,17 @@ export {
   parsePreviewActionCustomId,
   parseTwitterStatusId,
 } from './media-link';
+export type {
+  MediaGifResult,
+  MediaPreview,
+  MediaPreviewItem,
+  TranslateMediaTextResult,
+} from './media-types';
 export {
   createMediaGif,
   getMediaPreview,
   isMediaWorkerConfigured,
   translateMediaText,
-  type MediaGifResult,
-  type MediaPreview,
 } from './media-worker';
 export { createRequestLogger } from './request-logger';
 export { default as verifyInteractionRequest } from './verify-discord-request';
