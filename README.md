@@ -2,8 +2,8 @@
 
 # Nextjs Discord Bot
 
-**A Discord bot built with Next.js App Router, discord.js, Cloudflare Workers, Upstash Redis, and Render**  
-**Provides slash commands, guild FAQ storage, and automatic preview cards for X / Twitter, Pixiv, and Bluesky.**
+**Start on Render, split later.**  
+**A composable Discord bot with slash commands, guild settings, FAQ storage, and automatic preview cards for X / Twitter, Pixiv, and Bluesky.**
 
 <p>
   <a href="./README.md">English</a> · <a href="./README-zhtw.md">繁體中文</a> · <a href="./README-zhcn.md">简体中文</a>
@@ -14,10 +14,8 @@
   <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=nextdotjs" alt="Next.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/discord.js-14-5865f2?style=flat-square&logo=discord&logoColor=white" alt="discord.js" />
-  <img src="https://img.shields.io/badge/Cloudflare-Worker-f38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare Worker" />
-  <img src="https://img.shields.io/badge/Upstash-Redis-00e9a3?style=flat-square&logo=redis&logoColor=white" alt="Upstash Redis" />
-  <img src="https://img.shields.io/badge/Render-Listener-46e3b7?style=flat-square&logo=render&logoColor=111827" alt="Render Listener" />
-  <img src="https://img.shields.io/badge/Vitest-66%20tests-6e9f18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest" />
+  <img src="https://img.shields.io/badge/Prisma-Postgres-2d3748?style=flat-square&logo=prisma" alt="Prisma and Postgres" />
+  <img src="https://img.shields.io/badge/Render-First-46e3b7?style=flat-square&logo=render&logoColor=111827" alt="Render first deployment" />
 </p>
 
 </div>
@@ -25,338 +23,281 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Recommended MVP Deployment](#recommended-mvp-deployment)
-- [Quick Start](#quick-start)
+- [Deployment Profiles](#deployment-profiles)
+- [One-Click Deploy](#one-click-deploy)
+- [Service Model](#service-model)
+- [Quick Start: Render Standard](#quick-start-render-standard)
 - [Environment Variables](#environment-variables)
-- [Slash Commands](#slash-commands)
-- [Auto Preview System](#auto-preview-system)
-- [Recommended Render Gateway Listener Setup](#recommended-render-gateway-listener-setup)
+- [Split Deployment Examples](#split-deployment-examples)
 - [Runbooks](#runbooks)
 - [Development Commands](#development-commands)
-- [Project Structure](#project-structure)
-- [External References](#external-references)
 
 ## Overview
 
-This repository is a Discord bot built with **Next.js App Router** and a split deployment architecture:
+This repository is a Discord bot built with **Next.js App Router** and a composable deployment model:
 
-- **Vercel / Next.js**: slash commands, interactions, settings, FAQ
-- **Cloudflare Worker**: preview normalization, translate proxy, GIF proxy
-- **Render GIF API**: GIF conversion
-- **Render Gateway Listener**: persistent Discord Gateway listener for automatic preview replies
-- **Upstash Redis**: guild settings, FAQ, shared state
+- Start with a single platform: **Render**
+- Keep **Prisma + Postgres** as the default storage layer
+- Add an always-on **gateway listener** only when you need auto preview
+- Split `web`, `media`, or `gif-worker` out later without changing the command layer
 
-The project intentionally separates webhook interactions, preview processing, GIF jobs, and the persistent gateway connection so each piece can be deployed and operated independently.
+Core features:
 
-## Features
+- `/ping`
+- `/help`
+- `/faq`
+- `/settings`
+- automatic preview cards for X / Twitter, Pixiv, and Bluesky
+- optional translate and GIF actions
 
-### Slash Commands
+## Deployment Profiles
 
-- `/ping`: basic health check
-- `/help`: list available commands and quick-start notes
-- `/faq`: guild FAQ storage and lookup
-- `/settings`: guild-level auto preview settings panel
+| Profile           | Required services                                           | FAQ / settings | Auto preview | Translate                            | GIF                            | Platform count |
+| ----------------- | ----------------------------------------------------------- | -------------- | ------------ | ------------------------------------ | ------------------------------ | -------------- |
+| `Starter`         | `web` + `db`                                                | Yes            | No           | No                                   | No                             | 1              |
+| `Render Standard` | `web` + `listener` + `db`                                   | Yes            | Yes          | Optional when provider is configured | Optional via remote gif worker | 1              |
+| `Split`           | `web` + `listener` + `db` + optional `media` / `gif-worker` | Yes            | Yes          | Yes                                  | Optional                       | 2+             |
 
-### Automatic Preview Cards
+Recommended default:
 
-When a user posts a supported URL in a guild channel, the bot can automatically reply with a preview card.
+- Use **Render Standard** for the README path
+- Keep `GIF_MODE=disabled` unless you explicitly add a gif worker
+- Only expose translate when the translate provider is configured
 
-Currently supported:
+## One-Click Deploy
 
-- X / Twitter
-- Pixiv
-- Bluesky
+Use the button that matches the role you want to launch:
 
-Preview actions include:
+| Target             | What it deploys                                                               | Button                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Render Standard`  | Full stack on Render with `web` + `listener` + `db`                           | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `Vercel Web`       | `web` only. Bring your own Postgres and keep `listener` on an always-on host. | [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot&project-name=nextjs-discord-bot-web&build-command=pnpm%20prisma%3Agenerate%20%26%26%20pnpm%20build&env=NEXT_PUBLIC_APPLICATION_ID%2CPUBLIC_KEY%2CBOT_TOKEN%2CREGISTER_COMMANDS_KEY%2CDATABASE_URL%2CSTORAGE_DRIVER%2CMEDIA_MODE%2CGIF_MODE%2CTRANSLATE_PROVIDER&envDescription=Set%20Discord%20app%20secrets%20and%20an%20external%20Postgres%20URL.%20Auto%20preview%20still%20needs%20the%20gateway%20listener%20on%20an%20always-on%20host.&envLink=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot%23environment-variables&envDefaults=%7B%22STORAGE_DRIVER%22%3A%22prisma%22%2C%22MEDIA_MODE%22%3A%22embedded%22%2C%22GIF_MODE%22%3A%22disabled%22%2C%22TRANSLATE_PROVIDER%22%3A%22disabled%22%7D) |
+| `Cloudflare Media` | Optional remote `media` service from `worker/cloudflare-media-proxy`          | [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot%2Ftree%2Fmain%2Fworker%2Fcloudflare-media-proxy)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
-- author / platform metadata
-- text and engagement counters
-- image / video preview
-- `🌐` translate
-- `🎬` convert to GIF
-- `🗑️` retract preview
+Notes:
 
-### Guild-Level Settings
+- The Render button uses [`render.yaml`](./render.yaml) to provision the recommended `Render Standard` profile.
+- The Vercel button only covers the `web` role. Auto preview still requires `listener`.
+- The Cloudflare button deploys only the optional remote `media` wrapper.
+- Railway's official deploy button requires a published template, so this repo does not expose a Railway button yet.
 
-`/settings` supports:
-
-- global auto preview on/off
-- platform toggles for Twitter, Pixiv, and Bluesky
-- feature toggles for Translate and GIF
-- output mode: `embed` / `image`
-- NSFW media mode
-- default translation target language
-
-## Architecture
+## Service Model
 
 ```mermaid
 flowchart LR
   User["Discord User"] --> Discord["Discord API / Gateway"]
-  Discord --> Vercel["Vercel / Next.js\nSlash Commands & Interactions"]
-  Discord --> RenderListener["Render / Gateway Listener\nAuto Preview Reply"]
-  Vercel --> Redis["Upstash Redis\nGuild Settings / FAQ"]
-  RenderListener --> Redis
-  Vercel --> Worker["Cloudflare Worker\nPreview / Translate / GIF Proxy"]
-  RenderListener --> Worker
-  Worker --> RenderGif["Render GIF API"]
+  Discord --> Web["web\nNext.js app"]
+  Discord --> Listener["listener\nAlways-on gateway service"]
+  Web --> Storage["storage\nPrisma + Postgres or Redis adapter"]
+  Listener --> Storage
+  Web -. optional remote .-> Media["media\nOptional remote preview/translate/gif wrapper"]
+  Listener -. optional remote .-> Media
+  Media --> Gif["gif-worker\nOptional ffmpeg service"]
 ```
 
-## Recommended MVP Deployment
+Runtime roles:
 
-| Module           | Responsibility                  | Recommended host   |
-| ---------------- | ------------------------------- | ------------------ |
-| Next.js App      | Slash commands / interactions   | Vercel             |
-| Gateway Listener | Always-on auto-preview process  | Render Web Service |
-| Media Proxy      | Preview / translate / GIF proxy | Cloudflare Workers |
-| GIF API          | GIF conversion                  | Render Web Service |
-| Redis            | Guild settings / FAQ            | Upstash Redis      |
+- `web`
+  Handles slash commands, interaction verification, component callbacks, command registration, and debug routes.
+- `listener`
+  Maintains the Discord Gateway connection and is the only service that should auto-reply to `MESSAGE_CREATE`.
+- `media`
+  Optional remote wrapper for `/v1/preview`, `/v1/translate`, and `/v1/gif`. Keep it local by default with `MEDIA_MODE=embedded`.
+- `gif-worker`
+  Optional ffmpeg-backed conversion service. Only required when you want GIF generation.
 
-> [!NOTE]
-> For the gateway listener, choose a region that can reliably pass both Discord Gateway login and Discord REST probing. If a region returns `429` or `Access denied`, redeploy in a different region instead of treating it as a cold-start issue.
+## Quick Start: Render Standard
 
-## Quick Start
+This is the official recommended path.
 
 ### 1. Install dependencies
 
 ```bash
 pnpm install
+pnpm prisma:generate
 ```
 
 ### 2. Create environment variables
-
-Start from `.env.example`:
 
 ```bash
 cp .env.example .env.local
 ```
 
-### 3. Start the local development server
+Minimum Render Standard env set:
 
 ```bash
-pnpm dev
+NEXT_PUBLIC_APPLICATION_ID=
+PUBLIC_KEY=
+BOT_TOKEN=
+REGISTER_COMMANDS_KEY=
+DISCORD_GATEWAY_TOKEN=
+
+STORAGE_DRIVER=prisma
+DATABASE_URL=
+
+MEDIA_MODE=embedded
+GIF_MODE=disabled
+TRANSLATE_PROVIDER=disabled
 ```
 
-### 4. Start the gateway listener for auto preview testing
+### 3. Provision Postgres and apply the schema
+
+Create a **Render Postgres** instance and set `DATABASE_URL` for both:
+
+- `discord-bot-web`
+- `discord-bot-listener`
+
+Then run this once from a machine that can reach the database:
 
 ```bash
-pnpm gateway:listen
+pnpm prisma:push
 ```
+
+### 4. Deploy the web app
+
+Recommended Render web service settings:
+
+- Build command: `pnpm install && pnpm prisma:generate && pnpm build`
+- Start command: `pnpm start`
+
+### 5. Deploy the gateway listener
+
+Recommended Render web service settings:
+
+- Build command: `pnpm install && pnpm prisma:generate`
+- Start command: `pnpm gateway:listen`
+- Health check path: `/healthz`
+
+Notes:
+
+- Keep exactly **one** active production listener instance
+- Choose a region that can pass both Discord Gateway login and Discord REST probing
+
+### 6. Register commands
+
+Development:
+
+- Use the homepage button, or call `POST /api/discord-bot/register-commands`
+
+Production:
+
+- Call `POST /api/discord-bot/register-commands`
+- Include `Authorization: Bearer <REGISTER_COMMANDS_KEY>`
+
+### 7. Validate the deployment
+
+Check:
+
+- `https://<listener>/healthz`
+- `/settings` and `/faq` inside a guild
+- a fresh `x.com`, `pixiv.net`, or `bsky.app` link in a guild channel
 
 ## Environment Variables
 
-### Core Required
+### Discord Core
 
-| Variable                     | Description                                              |
-| ---------------------------- | -------------------------------------------------------- |
-| `NEXT_PUBLIC_APPLICATION_ID` | Discord application ID                                   |
-| `PUBLIC_KEY`                 | Discord interaction public key                           |
-| `BOT_TOKEN`                  | Discord bot token                                        |
-| `REGISTER_COMMANDS_KEY`      | Bearer key for protected production command registration |
+| Variable                     | Required by       | Notes                                               |
+| ---------------------------- | ----------------- | --------------------------------------------------- |
+| `NEXT_PUBLIC_APPLICATION_ID` | `web`             | Discord application ID                              |
+| `PUBLIC_KEY`                 | `web`             | Discord interaction verification key                |
+| `BOT_TOKEN`                  | `web`, `listener` | Bot token                                           |
+| `REGISTER_COMMANDS_KEY`      | `web`             | Protects production command registration            |
+| `DISCORD_GATEWAY_TOKEN`      | `listener`        | Optional dedicated token; falls back to `BOT_TOKEN` |
 
-### Redis / Guild Settings
+### Storage
 
-| Variable                   | Description                                |
-| -------------------------- | ------------------------------------------ |
-| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL                     |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token                   |
-| `REDIS_NAMESPACE`          | Redis key namespace, default `discord-bot` |
+| Variable                   | Required by       | Notes                                 |
+| -------------------------- | ----------------- | ------------------------------------- |
+| `STORAGE_DRIVER`           | `web`, `listener` | `prisma` (default) or `redis`         |
+| `DATABASE_URL`             | `web`, `listener` | Required when `STORAGE_DRIVER=prisma` |
+| `UPSTASH_REDIS_REST_URL`   | `web`, `listener` | Required when `STORAGE_DRIVER=redis`  |
+| `UPSTASH_REDIS_REST_TOKEN` | `web`, `listener` | Required when `STORAGE_DRIVER=redis`  |
+| `REDIS_NAMESPACE`          | `web`, `listener` | Optional Redis key namespace          |
 
-### Media Worker / Preview Chain
+### Media
 
-| Variable                  | Description                                   |
-| ------------------------- | --------------------------------------------- |
-| `MEDIA_WORKER_BASE_URL`   | Cloudflare Worker base URL                    |
-| `MEDIA_WORKER_TOKEN`      | Worker bearer token                           |
-| `MEDIA_WORKER_TIMEOUT_MS` | Timeout when the app calls the media worker   |
-| `MEDIA_ALLOWED_DOMAINS`   | Comma-separated allowlist for preview domains |
+| Variable                 | Required by                | Notes                                                   |
+| ------------------------ | -------------------------- | ------------------------------------------------------- |
+| `MEDIA_MODE`             | `web`, `listener`          | `embedded` (default), `remote`, or `disabled`           |
+| `MEDIA_SERVICE_BASE_URL` | `web`, `listener`          | Required when `MEDIA_MODE=remote`                       |
+| `MEDIA_SERVICE_TOKEN`    | `web`, `listener`          | Optional bearer token for remote media service          |
+| `MEDIA_TIMEOUT_MS`       | `web`, `listener`          | Timeout for remote media requests                       |
+| `MEDIA_ALLOWED_DOMAINS`  | `web`, `listener`, `media` | Comma-separated allowlist for supported preview domains |
+| `TRANSLATE_PROVIDER`     | `web`, `listener`          | `disabled` (default) or `libretranslate`                |
+| `TRANSLATE_API_BASE_URL` | `web`, `listener`, `media` | Required for embedded LibreTranslate mode               |
+| `TRANSLATE_API_KEY`      | `web`, `listener`, `media` | Optional translate provider key                         |
 
-### Gateway Listener
+### GIF
 
-| Variable                        | Description                                        |
-| ------------------------------- | -------------------------------------------------- |
-| `DISCORD_GATEWAY_TOKEN`         | Dedicated gateway token; falls back to `BOT_TOKEN` |
-| `GATEWAY_ATTACHMENT_MAX_BYTES`  | Maximum bytes per relayed preview attachment       |
-| `GATEWAY_ATTACHMENT_MAX_ITEMS`  | Maximum relayed media items                        |
-| `GATEWAY_ATTACHMENT_TIMEOUT_MS` | Per-attachment relay timeout                       |
+| Variable               | Required by                | Notes                                     |
+| ---------------------- | -------------------------- | ----------------------------------------- |
+| `GIF_MODE`             | `web`, `listener`          | `disabled` (default) or `remote`          |
+| `GIF_SERVICE_BASE_URL` | `web`, `listener`, `media` | Required when `GIF_MODE=remote`           |
+| `GIF_SERVICE_TOKEN`    | `web`, `listener`, `media` | Optional bearer token for the gif service |
+| `FFMPEG_TIMEOUT_SEC`   | `gif-worker`               | gif-worker only                           |
+| `MAX_GIF_DURATION_SEC` | `gif-worker`               | gif-worker only                           |
+| `GIF_SCALE_WIDTH`      | `gif-worker`               | gif-worker only                           |
+| `GIF_FPS`              | `gif-worker`               | gif-worker only                           |
 
-## Slash Commands
+### Listener
 
-| Command                   | Description                                      |
-| ------------------------- | ------------------------------------------------ |
-| `/ping`                   | Check whether the bot responds                   |
-| `/help`                   | Show available commands and quick-start info     |
-| `/faq get <key>`          | Look up an FAQ entry                             |
-| `/faq list`               | List FAQ keys                                    |
-| `/faq set <key> <answer>` | Create or update FAQ entries as admin            |
-| `/faq delete <key>`       | Delete FAQ entries as admin                      |
-| `/settings`               | Open the guild-level auto preview settings panel |
+| Variable                        | Required by | Notes                                    |
+| ------------------------------- | ----------- | ---------------------------------------- |
+| `GATEWAY_ATTACHMENT_MAX_BYTES`  | `listener`  | Max bytes per relayed preview attachment |
+| `GATEWAY_ATTACHMENT_MAX_ITEMS`  | `listener`  | Max relayed media items                  |
+| `GATEWAY_ATTACHMENT_TIMEOUT_MS` | `listener`  | Per-attachment relay timeout             |
 
-## Auto Preview System
+### Legacy Compatibility
 
-### Supported Platforms
+The project still accepts these aliases for one deprecation cycle:
 
-- `x.com`
-- `twitter.com`
-- `pixiv.net`
-- `www.pixiv.net`
-- `bsky.app`
+- `MEDIA_WORKER_BASE_URL` -> `MEDIA_SERVICE_BASE_URL`
+- `MEDIA_WORKER_TOKEN` -> `MEDIA_SERVICE_TOKEN`
+- `MEDIA_WORKER_TIMEOUT_MS` -> `MEDIA_TIMEOUT_MS`
 
-### Flow
+## Split Deployment Examples
 
-1. A user posts a supported URL in a guild channel
-2. The Render gateway listener receives `MESSAGE_CREATE`
-3. The listener reads guild settings and platform toggles
-4. The listener calls the Cloudflare Worker to fetch a normalized preview payload
-5. The bot replies with a preview card and native Discord media attachments when appropriate
+### 1. Move `web` to Vercel, keep `listener + db` on Render
 
-### Preview Actions
+- Keep the same Discord core envs
+- Keep `listener` on an always-on host
+- Share the same `DATABASE_URL`
 
-| Action | Purpose                                     |
-| ------ | ------------------------------------------- |
-| `🌐`   | Translate the post content                  |
-| `🎬`   | Send convertible media to the GIF API       |
-| `🗑️`   | Retract the preview message sent by the bot |
+### 2. Move `media` to Cloudflare Worker
 
-## Recommended Render Gateway Listener Setup
+- Set `MEDIA_MODE=remote`
+- Point `MEDIA_SERVICE_BASE_URL` at the worker
+- Use `MEDIA_SERVICE_TOKEN` for bearer auth if needed
+- Keep `/v1/preview`, `/v1/translate`, and `/v1/gif` unchanged
 
-Recommended MVP setup:
+### 3. Add a dedicated `gif-worker`
 
-- **Host**: Render Web Service
-- **Health Check Path**: `/healthz`
-- **Optional keepalive**: UptimeRobot or an equivalent external monitor that periodically requests `/healthz`
-- **Region rule**: use a region that can successfully complete both Discord Gateway login and Discord REST probing
-
-> [!TIP]
-> If your free web service sleeps, a keepalive monitor can reduce cold starts. It does not solve Discord or Cloudflare blocking a region's outbound traffic.
+- Keep `MEDIA_MODE=embedded`
+- Set `GIF_MODE=remote`
+- Point `GIF_SERVICE_BASE_URL` at the ffmpeg worker
+- Keep preview working even when GIF is disabled or unavailable
 
 ## Runbooks
 
+Advanced operational details live here:
+
 - [Render Gateway Listener Runbook](docs/en/runbooks/render-gateway-listener.md)
 - [Production Register-Commands Runbook](docs/en/runbooks/register-commands.md)
+- [Optional Cloudflare Media Service](worker/cloudflare-media-proxy/README.md)
+- [Optional Render GIF Worker](worker/render-gif-api/README.md)
 
 ## Development Commands
 
-| Command               | Purpose                            |
-| --------------------- | ---------------------------------- |
-| `pnpm dev`            | Start the local development server |
-| `pnpm build`          | Build the production bundle        |
-| `pnpm start`          | Start the production server        |
-| `pnpm lint`           | Run ESLint                         |
-| `pnpm typecheck`      | Run `tsc --noEmit`                 |
-| `pnpm test`           | Run Vitest                         |
-| `pnpm prettier`       | Run Prettier                       |
-| `pnpm gateway:listen` | Start the gateway listener         |
-| `pnpm worker:smoke`   | Smoke test the live media worker   |
-
-## Project Structure
-
-```text
-.
-├── README.md
-├── README-zhtw.md
-├── README-zhcn.md
-├── AGENTS.md
-├── docs/
-│   ├── en/
-│   │   └── runbooks/
-│   │       ├── register-commands.md
-│   │       └── render-gateway-listener.md
-│   ├── zhtw/
-│   │   └── runbooks/
-│   │       ├── register-commands.md
-│   │       └── render-gateway-listener.md
-│   └── zhcn/
-│       └── runbooks/
-│           ├── register-commands.md
-│           └── render-gateway-listener.md
-├── public/
-│   └── favicon.ico
-├── scripts/
-│   └── smoke-media-worker.mjs
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   └── api/
-│   │       └── discord-bot/
-│   │           ├── debug/
-│   │           │   ├── route.ts
-│   │           │   └── route.test.ts
-│   │           ├── interactions/
-│   │           │   ├── route.ts
-│   │           │   └── route.test.ts
-│   │           └── register-commands/
-│   │               ├── route.ts
-│   │               └── route.test.ts
-│   ├── commands/
-│   │   ├── faq.ts
-│   │   ├── faq.test.ts
-│   │   ├── help.ts
-│   │   ├── index.ts
-│   │   ├── ping.ts
-│   │   ├── settings.ts
-│   │   └── settings.test.ts
-│   └── common/
-│       ├── configs/
-│       │   └── index.ts
-│       ├── stores/
-│       │   ├── faq-store.ts
-│       │   ├── faq-store.test.ts
-│       │   ├── guild-settings-store.ts
-│       │   ├── guild-settings-store.test.ts
-│       │   └── index.ts
-│       ├── styles/
-│       │   └── globals.css
-│       ├── types/
-│       │   └── index.ts
-│       └── utils/
-│           ├── auth.ts
-│           ├── auth.test.ts
-│           ├── discord-api.ts
-│           ├── discord-api.test.ts
-│           ├── getCommands.ts
-│           ├── index.ts
-│           ├── media-component-handler.ts
-│           ├── media-component-handler.test.ts
-│           ├── media-link.ts
-│           ├── media-link.test.ts
-│           ├── media-worker.ts
-│           ├── media-worker.test.ts
-│           ├── preview-card.ts
-│           ├── request-logger.ts
-│           ├── settings-actor.ts
-│           ├── settings-panel.ts
-│           ├── ui-copy.json
-│           ├── ui-text.ts
-│           ├── verify-discord-request.ts
-│           └── verify-discord-request.test.ts
-└── worker/
-    ├── cloudflare-media-proxy/
-    │   ├── README.md
-    │   ├── wrangler.toml
-    │   └── src/
-    │       ├── index.ts
-    │       └── index.test.ts
-    ├── gateway-listener/
-    │   ├── README.md
-    │   ├── index.mjs
-    │   ├── preview-attachments.mjs
-    │   ├── preview-attachments.test.ts
-    │   └── ui-text.mjs
-    └── render-gif-api/
-        ├── README.md
-        ├── Dockerfile
-        ├── app.py
-        ├── requirements.txt
-        └── start.sh
-```
-
-## External References
-
-- [Render Web Services](https://render.com/docs/web-services)
-- [Render Health Checks](https://render.com/docs/health-checks)
-- [Render Deploys](https://render.com/docs/deploys)
-- [Discord Gateway](https://docs.discord.com/developers/events/gateway)
-- [Discord Events Overview](https://docs.discord.com/developers/events/overview)
+| Command                | Purpose                                            |
+| ---------------------- | -------------------------------------------------- |
+| `pnpm dev`             | Start the local development server                 |
+| `pnpm build`           | Build the production bundle                        |
+| `pnpm start`           | Start the production server                        |
+| `pnpm gateway:listen`  | Start the gateway listener                         |
+| `pnpm prisma:generate` | Generate the Prisma client                         |
+| `pnpm prisma:push`     | Apply the Prisma schema to the configured database |
+| `pnpm worker:smoke`    | Smoke test a live remote media service             |
+| `pnpm lint`            | Run ESLint                                         |
+| `pnpm typecheck`       | Run `tsc --noEmit`                                 |
+| `pnpm test`            | Run Vitest                                         |
+| `pnpm prettier`        | Run Prettier                                       |

@@ -6,6 +6,13 @@
 
 本文档记录使用 **Render Web Service** 运行 Discord Gateway listener 的推荐 MVP 运维流程。
 
+本手册默认对应 repo 推荐的部署组合：
+
+- `web` + `listener` + `db`
+- `STORAGE_DRIVER=prisma`
+- `MEDIA_MODE=embedded`
+- `gif-worker` 按需外挂
+
 listener 的职责是：
 
 - 保持 Discord Gateway 常驻连接
@@ -87,9 +94,10 @@ listener 的职责是：
 
 主要文件：
 
-- `worker/gateway-listener/index.mjs`
+- `worker/gateway-listener/index.ts`
 - `worker/gateway-listener/preview-attachments.mjs`
-- `worker/gateway-listener/ui-text.mjs`
+- `src/common/utils/preview-card.ts`
+- `src/common/stores/index.ts`
 
 ### 2. Push 到 Render 监看的 branch
 

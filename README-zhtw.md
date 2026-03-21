@@ -2,8 +2,8 @@
 
 # Nextjs Discord Bot
 
-**以 Next.js App Router、discord.js、Cloudflare Workers、Upstash Redis 與 Render 組成的 Discord Bot 專案**  
-**提供 Slash Commands、Guild FAQ，以及 X / Twitter、Pixiv、Bluesky 自動預覽卡片。**
+**先從 Render 開始，之後再自由拆分。**  
+**一個可組合部署的 Discord Bot，包含 slash commands、guild settings、FAQ 儲存，以及 X / Twitter、Pixiv、Bluesky 自動預覽卡片。**
 
 <p>
   <a href="./README.md">English</a> · <a href="./README-zhtw.md">繁體中文</a> · <a href="./README-zhcn.md">简体中文</a>
@@ -14,349 +14,290 @@
   <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=nextdotjs" alt="Next.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/discord.js-14-5865f2?style=flat-square&logo=discord&logoColor=white" alt="discord.js" />
-  <img src="https://img.shields.io/badge/Cloudflare-Worker-f38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare Worker" />
-  <img src="https://img.shields.io/badge/Upstash-Redis-00e9a3?style=flat-square&logo=redis&logoColor=white" alt="Upstash Redis" />
-  <img src="https://img.shields.io/badge/Render-Listener-46e3b7?style=flat-square&logo=render&logoColor=111827" alt="Render Listener" />
-  <img src="https://img.shields.io/badge/Vitest-66%20tests-6e9f18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest" />
+  <img src="https://img.shields.io/badge/Prisma-Postgres-2d3748?style=flat-square&logo=prisma" alt="Prisma and Postgres" />
+  <img src="https://img.shields.io/badge/Render-First-46e3b7?style=flat-square&logo=render&logoColor=111827" alt="Render first deployment" />
 </p>
 
 </div>
 
 ## 目錄
 
-- [專案概覽](#專案概覽)
-- [功能總覽](#功能總覽)
-- [系統架構](#系統架構)
-- [推薦的 MVP 部署拓撲](#推薦的-mvp-部署拓撲)
-- [快速開始](#快速開始)
-- [環境變數](#環境變數)
-- [Slash Commands](#slash-commands)
-- [自動預覽系統](#自動預覽系統)
-- [推薦的 Render Gateway Listener 方式](#推薦的-render-gateway-listener-方式)
+- [Overview](#overview)
+- [Deployment Profiles](#deployment-profiles)
+- [One-Click Deploy](#one-click-deploy)
+- [Service Model](#service-model)
+- [Quick Start: Render Standard](#quick-start-render-standard)
+- [Environment Variables](#environment-variables)
+- [Split Deployment Examples](#split-deployment-examples)
 - [Runbooks](#runbooks)
-- [開發指令](#開發指令)
-- [專案結構](#專案結構)
-- [外部參考文件](#外部參考文件)
+- [Development Commands](#development-commands)
 
-## 專案概覽
+## Overview
 
-這個專案是以 **Next.js App Router** 為核心的 Discord Bot，採用明確分層的部署架構：
+這個 repo 是以 **Next.js App Router** 實作的 Discord Bot，部署模型改成：
 
-- **Vercel / Next.js**：處理 Slash Commands、Interactions、設定面板、FAQ
-- **Cloudflare Worker**：負責預覽資料正規化、翻譯代理、GIF 任務代理
-- **Render GIF API**：處理 GIF 轉檔
-- **Render Gateway Listener**：常駐監聽 Discord Gateway，實現「使用者貼連結，Bot 自動回預覽卡」
-- **Upstash Redis**：Guild 設定、FAQ、共享狀態
+- 預設先走單平台 **Render**
+- 預設資料層是 **Prisma + Postgres**
+- 需要自動預覽時，再加上常駐 **gateway listener**
+- 後續可把 `web`、`media`、`gif-worker` 任意拆出去，而不用改指令層
 
-這個拆法把「互動 webhook」、「預覽處理」、「GIF 任務」和「常駐 Gateway 連線」分開，方便獨立部署、監控與故障隔離。
+核心功能：
 
-## 功能總覽
+- `/ping`
+- `/help`
+- `/faq`
+- `/settings`
+- X / Twitter、Pixiv、Bluesky 自動預覽卡片
+- 可選的翻譯與 GIF 動作
 
-### Slash Commands
+## Deployment Profiles
 
-- `/ping`：基本健康檢查
-- `/help`：顯示可用指令與快速開始提示
-- `/faq`：Guild FAQ 儲存與查詢
-- `/settings`：Guild 級自動預覽設定面板
+| Profile           | 必要服務                                                | FAQ / settings | 自動預覽 | 翻譯                | GIF                        | 平台數 |
+| ----------------- | ------------------------------------------------------- | -------------- | -------- | ------------------- | -------------------------- | ------ |
+| `Starter`         | `web` + `db`                                            | Yes            | No       | No                  | No                         | 1      |
+| `Render Standard` | `web` + `listener` + `db`                               | Yes            | Yes      | Provider 設好後可用 | 可透過遠端 gif worker 啟用 | 1      |
+| `Split`           | `web` + `listener` + `db` + 可選 `media` / `gif-worker` | Yes            | Yes      | Yes                 | 可選                       | 2+     |
 
-### 自動預覽卡片
+README 的官方預設路徑：
 
-當使用者在 Guild 頻道貼出支援網址時，Bot 可自動回覆預覽卡片。
+- 使用 **Render Standard**
+- `GIF_MODE` 預設維持 `disabled`
+- 只有在翻譯 provider 設好後才顯示 translate 按鈕
 
-目前支援：
+## One-Click Deploy
 
-- X / Twitter
-- Pixiv
-- Bluesky
+依照你要啟動的角色，直接點對應按鈕：
 
-預覽卡支援：
+| 目標               | 會部署什麼                                                           | 按鈕                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Render Standard`  | 在 Render 上一次建立 `web` + `listener` + `db`                       | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `Vercel Web`       | 只部署 `web`。資料庫需自行提供，`listener` 仍需放在 always-on host。 | [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot&project-name=nextjs-discord-bot-web&build-command=pnpm%20prisma%3Agenerate%20%26%26%20pnpm%20build&env=NEXT_PUBLIC_APPLICATION_ID%2CPUBLIC_KEY%2CBOT_TOKEN%2CREGISTER_COMMANDS_KEY%2CDATABASE_URL%2CSTORAGE_DRIVER%2CMEDIA_MODE%2CGIF_MODE%2CTRANSLATE_PROVIDER&envDescription=Set%20Discord%20app%20secrets%20and%20an%20external%20Postgres%20URL.%20Auto%20preview%20still%20needs%20the%20gateway%20listener%20on%20an%20always-on%20host.&envLink=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot%23environment-variables&envDefaults=%7B%22STORAGE_DRIVER%22%3A%22prisma%22%2C%22MEDIA_MODE%22%3A%22embedded%22%2C%22GIF_MODE%22%3A%22disabled%22%2C%22TRANSLATE_PROVIDER%22%3A%22disabled%22%7D) |
+| `Cloudflare Media` | 部署可選的遠端 `media` 服務，來源是 `worker/cloudflare-media-proxy`  | [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2FBlackishGreen33%2FNextjs-Discord-Bot%2Ftree%2Fmain%2Fworker%2Fcloudflare-media-proxy)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
-- 貼文作者 / 平台資訊
-- 文字內容與統計欄位
-- 圖片 / 影片預覽
-- `🌐` 翻譯
-- `🎬` GIF 轉換
-- `🗑️` 收回預覽
+說明：
 
-### Guild 級設定
+- Render 按鈕會使用 [`render.yaml`](./render.yaml) 建立推薦的 `Render Standard` profile。
+- Vercel 按鈕只負責 `web`，自動預覽仍需 `listener`。
+- Cloudflare 按鈕只部署可選的遠端 `media` wrapper。
+- Railway 官方按鈕必須先有已發佈的 template，所以這個 repo 目前沒有放 Railway 按鈕。
 
-`/settings` 可設定：
-
-- 整體自動預覽開關
-- 平台開關：Twitter、Pixiv、Bluesky
-- 功能開關：Translate、GIF
-- 輸出模式：`embed` / `image`
-- NSFW 媒體模式
-- 預設翻譯目標語言
-
-## 系統架構
+## Service Model
 
 ```mermaid
 flowchart LR
   User["Discord 使用者"] --> Discord["Discord API / Gateway"]
-  Discord --> Vercel["Vercel / Next.js\nSlash Commands & Interactions"]
-  Discord --> RenderListener["Render / Gateway Listener\nAuto Preview Reply"]
-  Vercel --> Redis["Upstash Redis\nGuild Settings / FAQ"]
-  RenderListener --> Redis
-  Vercel --> Worker["Cloudflare Worker\nPreview / Translate / GIF Proxy"]
-  RenderListener --> Worker
-  Worker --> RenderGif["Render GIF API"]
+  Discord --> Web["web\nNext.js app"]
+  Discord --> Listener["listener\n常駐 gateway 服務"]
+  Web --> Storage["storage\nPrisma + Postgres 或 Redis adapter"]
+  Listener --> Storage
+  Web -. optional remote .-> Media["media\n可選遠端 preview/translate/gif wrapper"]
+  Listener -. optional remote .-> Media
+  Media --> Gif["gif-worker\n可選 ffmpeg 服務"]
 ```
 
-## 推薦的 MVP 部署拓撲
+服務角色：
 
-| 模組             | 角色                          | 建議平台           |
-| ---------------- | ----------------------------- | ------------------ |
-| Next.js App      | Slash Commands / Interactions | Vercel             |
-| Gateway Listener | 自動預覽常駐程序              | Render Web Service |
-| Media Proxy      | 預覽 / 翻譯 / GIF 代理        | Cloudflare Workers |
-| GIF API          | GIF 轉檔                      | Render Web Service |
-| Redis            | Guild 設定 / FAQ              | Upstash Redis      |
+- `web`
+  處理 slash commands、interaction 驗簽、component callbacks、指令註冊與 debug route。
+- `listener`
+  維持 Discord Gateway 連線，且只由它負責 `MESSAGE_CREATE` 自動回覆預覽卡片。
+- `media`
+  可選遠端 wrapper，提供 `/v1/preview`、`/v1/translate`、`/v1/gif`。預設不需要，`MEDIA_MODE=embedded` 即可。
+- `gif-worker`
+  可選 ffmpeg 轉檔服務，只有你要 GIF 轉換時才需要。
 
-> [!NOTE]
-> Gateway listener 建議部署在可穩定通過 Discord Gateway 與 REST 探測的 region。若某個 region 出現 `429` 或 `Access denied`，應改建其他 region 重新驗證。
+## Quick Start: Render Standard
 
-## 快速開始
+這是官方推薦的部署方式。
 
 ### 1. 安裝依賴
 
 ```bash
 pnpm install
+pnpm prisma:generate
 ```
 
 ### 2. 建立環境變數
-
-以 `.env.example` 為基礎建立 `.env.local`：
 
 ```bash
 cp .env.example .env.local
 ```
 
-### 3. 啟動本機開發伺服器
+最小 Render Standard env：
 
 ```bash
-pnpm dev
+NEXT_PUBLIC_APPLICATION_ID=
+PUBLIC_KEY=
+BOT_TOKEN=
+REGISTER_COMMANDS_KEY=
+DISCORD_GATEWAY_TOKEN=
+
+STORAGE_DRIVER=prisma
+DATABASE_URL=
+
+MEDIA_MODE=embedded
+GIF_MODE=disabled
+TRANSLATE_PROVIDER=disabled
 ```
 
-### 4. 如需測試自動預覽，另外啟動 Gateway Listener
+### 3. 建立 Postgres 並套用 schema
+
+建立 **Render Postgres**，並把 `DATABASE_URL` 同時提供給：
+
+- `discord-bot-web`
+- `discord-bot-listener`
+
+接著在可連到資料庫的環境執行一次：
 
 ```bash
-pnpm gateway:listen
+pnpm prisma:push
 ```
 
-## 環境變數
+### 4. 部署 web app
 
-### 核心必要
+建議的 Render Web Service 設定：
 
-| 變數                         | 說明                                        |
-| ---------------------------- | ------------------------------------------- |
-| `NEXT_PUBLIC_APPLICATION_ID` | Discord Application ID                      |
-| `PUBLIC_KEY`                 | Discord Interaction Public Key              |
-| `BOT_TOKEN`                  | Discord Bot Token                           |
-| `REGISTER_COMMANDS_KEY`      | 正式環境註冊 Slash Commands 用的 Bearer Key |
+- Build command: `pnpm install && pnpm prisma:generate && pnpm build`
+- Start command: `pnpm start`
 
-### Redis / Guild 設定
+### 5. 部署 gateway listener
 
-| 變數                       | 說明                                    |
-| -------------------------- | --------------------------------------- |
-| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL                  |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST Token                |
-| `REDIS_NAMESPACE`          | Redis key namespace，預設 `discord-bot` |
+建議的 Render Web Service 設定：
 
-### Media Worker / 預覽鏈路
+- Build command: `pnpm install && pnpm prisma:generate`
+- Start command: `pnpm gateway:listen`
+- Health check path: `/healthz`
 
-| 變數                      | 說明                                 |
-| ------------------------- | ------------------------------------ |
-| `MEDIA_WORKER_BASE_URL`   | Cloudflare Worker base URL           |
-| `MEDIA_WORKER_TOKEN`      | Worker Bearer Token                  |
-| `MEDIA_WORKER_TIMEOUT_MS` | Next.js 呼叫 media worker 的 timeout |
-| `MEDIA_ALLOWED_DOMAINS`   | 允許自動預覽的網域清單               |
+注意：
 
-### Gateway Listener
+- 正式環境同一時間只保留 **一個** production listener
+- region 要同時能通過 Discord Gateway login 與 Discord REST probe
 
-| 變數                            | 說明                                           |
-| ------------------------------- | ---------------------------------------------- |
-| `DISCORD_GATEWAY_TOKEN`         | 專用 Gateway Token；未設定時回退到 `BOT_TOKEN` |
-| `GATEWAY_ATTACHMENT_MAX_BYTES`  | 預覽附件最大位元組數                           |
-| `GATEWAY_ATTACHMENT_MAX_ITEMS`  | 預覽附件最多項數                               |
-| `GATEWAY_ATTACHMENT_TIMEOUT_MS` | 單附件拉取 timeout                             |
+### 6. 註冊 commands
 
-## Slash Commands
+開發環境：
 
-| 指令                      | 說明                          |
-| ------------------------- | ----------------------------- |
-| `/ping`                   | Bot 是否正常回應              |
-| `/help`                   | 顯示目前可用指令與快速開始    |
-| `/faq get <key>`          | 查詢 FAQ                      |
-| `/faq list`               | 列出 FAQ keys                 |
-| `/faq set <key> <answer>` | 管理員新增 / 更新 FAQ         |
-| `/faq delete <key>`       | 管理員刪除 FAQ                |
-| `/settings`               | 打開 Guild 級自動預覽設定面板 |
+- 可用首頁按鈕，或直接呼叫 `POST /api/discord-bot/register-commands`
 
-## 自動預覽系統
+正式環境：
 
-### 支援平台
+- 呼叫 `POST /api/discord-bot/register-commands`
+- 帶上 `Authorization: Bearer <REGISTER_COMMANDS_KEY>`
 
-- `x.com`
-- `twitter.com`
-- `pixiv.net`
-- `www.pixiv.net`
-- `bsky.app`
+### 7. 驗證部署
 
-### 運作方式
+確認：
 
-1. 使用者在 Guild 頻道貼出支援網址
-2. Render Gateway Listener 收到 `MESSAGE_CREATE`
-3. Listener 讀取 Guild 設定與平台開關
-4. Listener 呼叫 Cloudflare Worker 取得標準化 preview payload
-5. Bot 回覆預覽卡，必要時附帶原生 Discord 附件媒體
+- `https://<listener>/healthz`
+- guild 內 `/settings` 與 `/faq`
+- 在 guild 頻道貼新的 `x.com`、`pixiv.net`、`bsky.app` 連結
 
-### 預覽按鈕
+## Environment Variables
 
-| 按鈕 | 用途                     |
-| ---- | ------------------------ |
-| `🌐` | 翻譯貼文內容             |
-| `🎬` | 將可轉換媒體送去 GIF API |
-| `🗑️` | 收回 Bot 發出的預覽卡    |
+### Discord Core
 
-## 推薦的 Render Gateway Listener 方式
+| 變數                         | 由誰使用          | 說明                                     |
+| ---------------------------- | ----------------- | ---------------------------------------- |
+| `NEXT_PUBLIC_APPLICATION_ID` | `web`             | Discord application ID                   |
+| `PUBLIC_KEY`                 | `web`             | Discord interaction 驗簽公鑰             |
+| `BOT_TOKEN`                  | `web`, `listener` | Bot token                                |
+| `REGISTER_COMMANDS_KEY`      | `web`             | 保護正式環境 command registration        |
+| `DISCORD_GATEWAY_TOKEN`      | `listener`        | 可選專用 token；未設時回退到 `BOT_TOKEN` |
 
-推薦的 MVP 方式：
+### Storage
 
-- **平台**：Render Web Service
-- **Health Check Path**：`/healthz`
-- **外部保活**：可選擇用 UptimeRobot 或同類服務定期 `GET /healthz`
-- **Region 選擇原則**：以「可穩定通過 Discord Gateway 與 REST 探測」為準
+| 變數                       | 由誰使用          | 說明                           |
+| -------------------------- | ----------------- | ------------------------------ |
+| `STORAGE_DRIVER`           | `web`, `listener` | `prisma`（預設）或 `redis`     |
+| `DATABASE_URL`             | `web`, `listener` | `STORAGE_DRIVER=prisma` 時必填 |
+| `UPSTASH_REDIS_REST_URL`   | `web`, `listener` | `STORAGE_DRIVER=redis` 時必填  |
+| `UPSTASH_REDIS_REST_TOKEN` | `web`, `listener` | `STORAGE_DRIVER=redis` 時必填  |
+| `REDIS_NAMESPACE`          | `web`, `listener` | 可選 Redis key namespace       |
 
-> [!TIP]
-> 如果免費 Web Service 會休眠，可以用外部監控定期請求 `/healthz`。如果某個 region 被 Discord / Cloudflare 擋下，直接換 region 測，不要把問題誤判成單純冷啟動。
+### Media
+
+| 變數                     | 由誰使用                   | 說明                                     |
+| ------------------------ | -------------------------- | ---------------------------------------- |
+| `MEDIA_MODE`             | `web`, `listener`          | `embedded`（預設）、`remote`、`disabled` |
+| `MEDIA_SERVICE_BASE_URL` | `web`, `listener`          | `MEDIA_MODE=remote` 時必填               |
+| `MEDIA_SERVICE_TOKEN`    | `web`, `listener`          | 遠端 media service 的 bearer token       |
+| `MEDIA_TIMEOUT_MS`       | `web`, `listener`          | 遠端 media request timeout               |
+| `MEDIA_ALLOWED_DOMAINS`  | `web`, `listener`, `media` | 支援平台 allowlist                       |
+| `TRANSLATE_PROVIDER`     | `web`, `listener`          | `disabled`（預設）或 `libretranslate`    |
+| `TRANSLATE_API_BASE_URL` | `web`, `listener`, `media` | embedded LibreTranslate 模式必填         |
+| `TRANSLATE_API_KEY`      | `web`, `listener`, `media` | 可選翻譯 provider key                    |
+
+### GIF
+
+| 變數                   | 由誰使用                   | 說明                          |
+| ---------------------- | -------------------------- | ----------------------------- |
+| `GIF_MODE`             | `web`, `listener`          | `disabled`（預設）或 `remote` |
+| `GIF_SERVICE_BASE_URL` | `web`, `listener`, `media` | `GIF_MODE=remote` 時必填      |
+| `GIF_SERVICE_TOKEN`    | `web`, `listener`, `media` | gif service 的 bearer token   |
+| `FFMPEG_TIMEOUT_SEC`   | `gif-worker`               | 只給 gif-worker 使用          |
+| `MAX_GIF_DURATION_SEC` | `gif-worker`               | 只給 gif-worker 使用          |
+| `GIF_SCALE_WIDTH`      | `gif-worker`               | 只給 gif-worker 使用          |
+| `GIF_FPS`              | `gif-worker`               | 只給 gif-worker 使用          |
+
+### Listener
+
+| 變數                            | 由誰使用   | 說明                     |
+| ------------------------------- | ---------- | ------------------------ |
+| `GATEWAY_ATTACHMENT_MAX_BYTES`  | `listener` | 單一預覽附件的最大 bytes |
+| `GATEWAY_ATTACHMENT_MAX_ITEMS`  | `listener` | 可轉傳的媒體數量上限     |
+| `GATEWAY_ATTACHMENT_TIMEOUT_MS` | `listener` | 單一附件轉傳 timeout     |
+
+### Legacy Compatibility
+
+專案仍接受以下舊 env 別名一個 deprecation cycle：
+
+- `MEDIA_WORKER_BASE_URL` -> `MEDIA_SERVICE_BASE_URL`
+- `MEDIA_WORKER_TOKEN` -> `MEDIA_SERVICE_TOKEN`
+- `MEDIA_WORKER_TIMEOUT_MS` -> `MEDIA_TIMEOUT_MS`
+
+## Split Deployment Examples
+
+### 1. 把 `web` 搬去 Vercel，`listener + db` 留在 Render
+
+- Discord core env 維持相同
+- `listener` 仍需部署在 always-on host
+- 共用同一組 `DATABASE_URL`
+
+### 2. 把 `media` 搬去 Cloudflare Worker
+
+- 設定 `MEDIA_MODE=remote`
+- `MEDIA_SERVICE_BASE_URL` 指向 worker
+- 需要 bearer auth 時使用 `MEDIA_SERVICE_TOKEN`
+- `/v1/preview`、`/v1/translate`、`/v1/gif` 路徑維持不變
+
+### 3. 加一個獨立 `gif-worker`
+
+- `MEDIA_MODE` 維持 `embedded`
+- 設定 `GIF_MODE=remote`
+- `GIF_SERVICE_BASE_URL` 指向 ffmpeg worker
+- 即使 GIF 停用或不可用，preview 仍可正常運作
 
 ## Runbooks
 
+進階維運文件：
+
 - [Render Gateway Listener Runbook](docs/zhtw/runbooks/render-gateway-listener.md)
 - [Production Register-Commands Runbook](docs/zhtw/runbooks/register-commands.md)
+- [Optional Cloudflare Media Service](worker/cloudflare-media-proxy/README.md)
+- [Optional Render GIF Worker](worker/render-gif-api/README.md)
 
-## 開發指令
+## Development Commands
 
-| 指令                  | 用途                         |
-| --------------------- | ---------------------------- |
-| `pnpm dev`            | 啟動本機開發伺服器           |
-| `pnpm build`          | 建立 production build        |
-| `pnpm start`          | 啟動 production server       |
-| `pnpm lint`           | 執行 ESLint                  |
-| `pnpm typecheck`      | 執行 `tsc --noEmit`          |
-| `pnpm test`           | 執行 Vitest                  |
-| `pnpm prettier`       | 執行 Prettier 寫回           |
-| `pnpm gateway:listen` | 啟動 Gateway listener        |
-| `pnpm worker:smoke`   | Smoke test live media worker |
-
-## 專案結構
-
-```text
-.
-├── README.md
-├── README-zhtw.md
-├── README-zhcn.md
-├── AGENTS.md
-├── docs/
-│   ├── en/
-│   │   └── runbooks/
-│   │       ├── register-commands.md
-│   │       └── render-gateway-listener.md
-│   ├── zhtw/
-│   │   └── runbooks/
-│   │       ├── register-commands.md
-│   │       └── render-gateway-listener.md
-│   └── zhcn/
-│       └── runbooks/
-│           ├── register-commands.md
-│           └── render-gateway-listener.md
-├── public/
-│   └── favicon.ico
-├── scripts/
-│   └── smoke-media-worker.mjs
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   └── api/
-│   │       └── discord-bot/
-│   │           ├── debug/
-│   │           │   ├── route.ts
-│   │           │   └── route.test.ts
-│   │           ├── interactions/
-│   │           │   ├── route.ts
-│   │           │   └── route.test.ts
-│   │           └── register-commands/
-│   │               ├── route.ts
-│   │               └── route.test.ts
-│   ├── commands/
-│   │   ├── faq.ts
-│   │   ├── faq.test.ts
-│   │   ├── help.ts
-│   │   ├── index.ts
-│   │   ├── ping.ts
-│   │   ├── settings.ts
-│   │   └── settings.test.ts
-│   └── common/
-│       ├── configs/
-│       │   └── index.ts
-│       ├── stores/
-│       │   ├── faq-store.ts
-│       │   ├── faq-store.test.ts
-│       │   ├── guild-settings-store.ts
-│       │   ├── guild-settings-store.test.ts
-│       │   └── index.ts
-│       ├── styles/
-│       │   └── globals.css
-│       ├── types/
-│       │   └── index.ts
-│       └── utils/
-│           ├── auth.ts
-│           ├── auth.test.ts
-│           ├── discord-api.ts
-│           ├── discord-api.test.ts
-│           ├── getCommands.ts
-│           ├── index.ts
-│           ├── media-component-handler.ts
-│           ├── media-component-handler.test.ts
-│           ├── media-link.ts
-│           ├── media-link.test.ts
-│           ├── media-worker.ts
-│           ├── media-worker.test.ts
-│           ├── preview-card.ts
-│           ├── request-logger.ts
-│           ├── settings-actor.ts
-│           ├── settings-panel.ts
-│           ├── ui-copy.json
-│           ├── ui-text.ts
-│           ├── verify-discord-request.ts
-│           └── verify-discord-request.test.ts
-└── worker/
-    ├── cloudflare-media-proxy/
-    │   ├── README.md
-    │   ├── wrangler.toml
-    │   └── src/
-    │       ├── index.ts
-    │       └── index.test.ts
-    ├── gateway-listener/
-    │   ├── README.md
-    │   ├── index.mjs
-    │   ├── preview-attachments.mjs
-    │   ├── preview-attachments.test.ts
-    │   └── ui-text.mjs
-    └── render-gif-api/
-        ├── README.md
-        ├── Dockerfile
-        ├── app.py
-        ├── requirements.txt
-        └── start.sh
-```
-
-## 外部參考文件
-
-- [Render Web Services](https://render.com/docs/web-services)
-- [Render Health Checks](https://render.com/docs/health-checks)
-- [Render Deploys](https://render.com/docs/deploys)
-- [Discord Gateway](https://docs.discord.com/developers/events/gateway)
-- [Discord Events Overview](https://docs.discord.com/developers/events/overview)
+| 指令                   | 用途                                       |
+| ---------------------- | ------------------------------------------ |
+| `pnpm dev`             | 啟動本機開發伺服器                         |
+| `pnpm build`           | 建立 production bundle                     |
+| `pnpm start`           | 啟動 production server                     |
+| `pnpm gateway:listen`  | 啟動 gateway listener                      |
+| `pnpm prisma:generate` | 產生 Prisma client                         |
+| `pnpm prisma:push`     | 將 Prisma schema 套用到資料庫              |
+| `pnpm worker:smoke`    | 對 live remote media service 做 smoke test |
+| `pnpm lint`            | 執行 ESLint                                |
+| `pnpm typecheck`       | 執行 `tsc --noEmit`                        |
+| `pnpm test`            | 執行 Vitest                                |
+| `pnpm prettier`        | 執行 Prettier                              |

@@ -1,6 +1,6 @@
-# Render GIF API
+# Render GIF Worker
 
-This service is the GIF conversion backend for `worker/cloudflare-media-proxy`.
+This service is the optional remote `gif-worker` for the Discord bot.
 
 Endpoints:
 
@@ -54,9 +54,15 @@ docker run --rm -p 10000:10000 \
 4. Set `GIF_API_TOKEN`
 5. Deploy and verify `GET /health`
 
-## Connect to Cloudflare Worker
+## Connect to Callers
 
-Set these in `worker/cloudflare-media-proxy`:
+Direct from `web` or `listener`:
+
+- `GIF_MODE=remote`
+- `GIF_SERVICE_BASE_URL=https://<render-service>.onrender.com`
+- `GIF_SERVICE_TOKEN=<same token>`
+
+Through the optional Cloudflare media service:
 
 - `GIF_API_BASE_URL=https://<render-service>.onrender.com`
 - `GIF_API_TOKEN=<same token>`

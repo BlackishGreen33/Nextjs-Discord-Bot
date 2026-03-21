@@ -1,32 +1,59 @@
 # Discord Gateway Listener
 
-This process listens to `MESSAGE_CREATE` events and auto-replies with preview cards when users paste supported X / Twitter, Pixiv, or Bluesky URLs.
+This service owns `MESSAGE_CREATE` auto preview replies for X / Twitter, Pixiv, and Bluesky links.
 
 ## Why This Exists
 
-The Next.js app only handles slash commands and component interactions. Automatic link detection requires a Discord Gateway client with a persistent WebSocket connection.
+The `web` app handles slash commands and interaction callbacks. Auto preview requires a separate always-on Discord Gateway connection, so the listener is its own runtime role.
+
+## Deployment Role
+
+In the recommended `Render Standard` profile, this process runs as:
+
+- `discord-bot-listener`
+- Render Web Service
+- health check path: `/healthz`
+
+Keep exactly one healthy production listener instance at a time.
 
 ## Required Environment Variables
 
-- `DISCORD_GATEWAY_TOKEN` or `BOT_TOKEN`
+- `BOT_TOKEN` or `DISCORD_GATEWAY_TOKEN`
+- `STORAGE_DRIVER=prisma|redis`
+
+Also set one storage backend:
+
+- Prisma default: `DATABASE_URL`
+- Redis adapter: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 
 ## Optional Environment Variables
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
 - `REDIS_NAMESPACE`
+- `MEDIA_MODE=embedded|remote|disabled`
+- `MEDIA_SERVICE_BASE_URL`
+- `MEDIA_SERVICE_TOKEN`
+- `TRANSLATE_PROVIDER=disabled|libretranslate`
+- `TRANSLATE_API_BASE_URL`
+- `TRANSLATE_API_KEY`
+- `GIF_MODE=disabled|remote`
+- `GIF_SERVICE_BASE_URL`
+- `GIF_SERVICE_TOKEN`
 - `MEDIA_ALLOWED_DOMAINS`
-- `MEDIA_WORKER_BASE_URL`
-- `MEDIA_WORKER_TOKEN`
 - `GATEWAY_ATTACHMENT_MAX_BYTES` (default `8388608`)
 - `GATEWAY_ATTACHMENT_MAX_ITEMS` (default `4`)
 - `GATEWAY_ATTACHMENT_TIMEOUT_MS` (default `10000`)
 
-If Redis is missing, the listener falls back to the default guild preview settings.
+Legacy aliases are still accepted for one deprecation cycle:
 
-When the preview provider returns direct image or video URLs, the listener re-uploads them as Discord attachments so the reply can render as native media instead of only an embed thumbnail. Large or unsupported media falls back to the metadata embed.
+- `MEDIA_WORKER_BASE_URL`
+- `MEDIA_WORKER_TOKEN`
+- `MEDIA_WORKER_TIMEOUT_MS`
 
-If `PORT` is present, the listener also starts a tiny HTTP health server and responds on:
+If storage is unavailable, the listener falls back to the default guild preview settings.
+
+When the preview provider returns direct image or video URLs, the listener re-uploads them as Discord attachments so the reply can render as native media instead of only an embed thumbnail. Large or unsupported media falls back to metadata-only embeds.
+
+If `PORT` is present, the listener also exposes:
 
 - `/`
 - `/health`
@@ -35,25 +62,21 @@ If `PORT` is present, the listener also starts a tiny HTTP health server and res
 ## Run Locally
 
 ```bash
-node worker/gateway-listener/index.mjs
+pnpm gateway:listen
 ```
 
-## Render MVP Deployment
+## Render Standard Notes
 
-The currently validated cloud path is:
+- Build command: `pnpm install && pnpm prisma:generate`
+- Start command: `pnpm gateway:listen`
+- Health check path: `/healthz`
 
-- platform: Render Web Service
-- health path: `/healthz`
-- optional keepalive: UptimeRobot or an equivalent monitor that periodically requests `/healthz`
-
-Choose a region that can successfully complete both:
+Choose a region that can pass both:
 
 - Discord Gateway login
 - Discord REST probe
 
-For operational details, see:
-
-- [docs/en/runbooks/render-gateway-listener.md](../../docs/en/runbooks/render-gateway-listener.md)
+For operational details, see [docs/en/runbooks/render-gateway-listener.md](../../docs/en/runbooks/render-gateway-listener.md).
 
 ## Permissions Checklist
 

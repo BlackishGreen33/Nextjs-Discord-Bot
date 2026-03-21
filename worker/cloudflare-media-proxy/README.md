@@ -1,6 +1,6 @@
-# Cloudflare Media Proxy Worker
+# Cloudflare Media Service
 
-This Worker is the preview center for the Discord bot.
+This Worker is an optional remote `media` service for the `Split` deployment profile.
 
 Endpoints:
 
@@ -9,12 +9,14 @@ Endpoints:
 - `POST /v1/gif`
 - `GET /health`
 
+The wire contract stays stable so `web` and `listener` do not need custom per-platform logic when deployed remotely.
+
 ## Responsibilities
 
 - fetch and normalize preview data for X/Twitter, Pixiv, and Bluesky
 - proxy text translation to a LibreTranslate-compatible API
 - proxy GIF conversion requests to the Render GIF service
-- keep heavy provider logic outside the Next.js interaction webhook
+- keep provider-specific logic outside `web` and `listener`
 
 ## Environment Variables
 
@@ -33,8 +35,8 @@ Optional provider configuration:
 - `BLUESKY_FALLBACK_BASE_URL`: optional alternate Bluesky API base URL
 - `TRANSLATE_API_BASE_URL`: LibreTranslate-compatible API base URL
 - `TRANSLATE_API_KEY`: optional translate API key
-- `GIF_API_BASE_URL`: GIF service base URL
-- `GIF_API_TOKEN`: bearer token for the GIF service
+- `GIF_API_BASE_URL`: optional GIF service base URL
+- `GIF_API_TOKEN`: optional bearer token for the GIF service
 
 ## Deploy
 
@@ -43,20 +45,26 @@ cd worker/cloudflare-media-proxy
 pnpm dlx wrangler deploy
 ```
 
-## Next.js Integration
+## App Integration
 
-Set these in the Next.js app:
+Set these in `web` and `listener`:
 
-- `MEDIA_WORKER_BASE_URL=https://<your-worker-domain>`
-- `MEDIA_WORKER_TOKEN=<same as WORKER_AUTH_TOKEN>`
+- `MEDIA_MODE=remote`
+- `MEDIA_SERVICE_BASE_URL=https://<your-worker-domain>`
+- `MEDIA_SERVICE_TOKEN=<same as WORKER_AUTH_TOKEN>`
+
+Legacy aliases still work for one deprecation cycle:
+
+- `MEDIA_WORKER_BASE_URL`
+- `MEDIA_WORKER_TOKEN`
 
 ## Smoke Test
 
 Run the project-level smoke test against a live worker:
 
 ```bash
-MEDIA_WORKER_BASE_URL=https://<your-worker-domain> \
-MEDIA_WORKER_TOKEN=<worker-token> \
+MEDIA_SERVICE_BASE_URL=https://<your-worker-domain> \
+MEDIA_SERVICE_TOKEN=<worker-token> \
 pnpm worker:smoke
 ```
 
