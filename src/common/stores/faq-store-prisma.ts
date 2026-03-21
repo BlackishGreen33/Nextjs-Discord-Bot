@@ -69,7 +69,7 @@ export const createPrismaFaqStore = (): FaqStore => ({
       },
     });
 
-    return entries.map((entry) => entry.key);
+    return entries.map((entry: { key: string }) => entry.key);
   },
 
   async set(guildId, faqKey, answer, updatedBy) {
