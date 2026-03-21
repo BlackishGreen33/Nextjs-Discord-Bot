@@ -6,6 +6,13 @@
 
 This document describes the recommended MVP operations flow for running the Discord Gateway listener on a **Render Web Service**.
 
+This runbook assumes the repository's recommended deployment profile:
+
+- `web` + `listener` + `db`
+- `STORAGE_DRIVER=prisma`
+- `MEDIA_MODE=embedded`
+- optional remote `gif-worker`
+
 The listener is responsible for:
 
 - keeping a persistent Discord Gateway connection alive
@@ -87,9 +94,10 @@ A healthy `/healthz` response should look roughly like this:
 
 Main files:
 
-- `worker/gateway-listener/index.mjs`
+- `worker/gateway-listener/index.ts`
 - `worker/gateway-listener/preview-attachments.mjs`
-- `worker/gateway-listener/ui-text.mjs`
+- `src/common/utils/preview-card.ts`
+- `src/common/stores/index.ts`
 
 ### 2. Push to the branch tracked by Render
 
