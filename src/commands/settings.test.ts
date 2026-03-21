@@ -85,7 +85,7 @@ describe('/settings command', () => {
     };
 
     expect(response.data.flags).toBe(64);
-    expect(response.data.content).toContain('尚未設定 Redis');
+    expect(response.data.content).toContain('尚未設定儲存層');
   });
 
   it('returns a visible panel for admins', async () => {

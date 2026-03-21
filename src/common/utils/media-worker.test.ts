@@ -3,36 +3,50 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createMediaGif,
   getMediaPreview,
+  isMediaWorkerConfigured,
   translateMediaText,
 } from './media-worker';
 
 describe('media-worker utils', () => {
   const mutableEnv = process.env as Record<string, string | undefined>;
-  const previousBaseUrl = process.env.MEDIA_WORKER_BASE_URL;
-  const previousToken = process.env.MEDIA_WORKER_TOKEN;
+  const ENV_KEYS = [
+    'GIF_MODE',
+    'GIF_SERVICE_BASE_URL',
+    'GIF_SERVICE_TOKEN',
+    'MEDIA_MODE',
+    'MEDIA_SERVICE_BASE_URL',
+    'MEDIA_SERVICE_TOKEN',
+    'MEDIA_TIMEOUT_MS',
+    'MEDIA_WORKER_BASE_URL',
+    'MEDIA_WORKER_TOKEN',
+    'TRANSLATE_API_BASE_URL',
+    'TRANSLATE_PROVIDER',
+  ] as const;
+  const originalEnv = Object.fromEntries(
+    ENV_KEYS.map((key) => [key, process.env[key]])
+  ) as Record<(typeof ENV_KEYS)[number], string | undefined>;
 
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
-    delete mutableEnv.MEDIA_WORKER_BASE_URL;
-    delete mutableEnv.MEDIA_WORKER_TOKEN;
+    for (const key of ENV_KEYS) {
+      delete mutableEnv[key];
+    }
   });
 
   afterEach(() => {
-    if (previousBaseUrl === undefined) {
-      delete mutableEnv.MEDIA_WORKER_BASE_URL;
-    } else {
-      mutableEnv.MEDIA_WORKER_BASE_URL = previousBaseUrl;
-    }
-
-    if (previousToken === undefined) {
-      delete mutableEnv.MEDIA_WORKER_TOKEN;
-    } else {
-      mutableEnv.MEDIA_WORKER_TOKEN = previousToken;
+    for (const key of ENV_KEYS) {
+      if (originalEnv[key] === undefined) {
+        delete mutableEnv[key];
+      } else {
+        mutableEnv[key] = originalEnv[key];
+      }
     }
   });
 
-  it('returns a minimal preview when worker config is absent', async () => {
+  it('returns a minimal preview when media mode is disabled', async () => {
+    mutableEnv.MEDIA_MODE = 'disabled';
+
     await expect(
       getMediaPreview('https://pixiv.net/artworks/1')
     ).resolves.toEqual(
@@ -44,9 +58,10 @@ describe('media-worker utils', () => {
     );
   });
 
-  it('maps preview payload from the external worker', async () => {
-    mutableEnv.MEDIA_WORKER_BASE_URL = 'https://media-worker.example';
-    mutableEnv.MEDIA_WORKER_TOKEN = 'worker-token';
+  it('maps preview payload from the remote media service', async () => {
+    mutableEnv.MEDIA_MODE = 'remote';
+    mutableEnv.MEDIA_SERVICE_BASE_URL = 'https://media-service.example';
+    mutableEnv.MEDIA_SERVICE_TOKEN = 'worker-token';
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -84,47 +99,47 @@ describe('media-worker utils', () => {
         ],
       })
     );
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://media-service.example/v1/preview',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer worker-token',
+        }),
+      })
+    );
   });
 
-  it('falls back to direct Twitter providers when the worker path fails', async () => {
-    mutableEnv.MEDIA_WORKER_BASE_URL = 'https://media-worker.example';
-    mutableEnv.MEDIA_WORKER_TOKEN = 'worker-token';
-    vi.spyOn(global, 'fetch')
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: 'worker blocked' }), {
-          status: 502,
-        })
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            code: 200,
-            message: 'OK',
-            tweet: {
-              author: {
-                avatar_url: 'https://cdn.example/avatar.jpg',
-                name: 'Alice',
-                screen_name: 'alice',
-              },
-              created_at: 'Tue Mar 03 11:29:42 +0000 2026',
-              likes: 123,
-              media: {
-                all: [
-                  {
-                    type: 'photo',
-                    url: 'https://cdn.example/photo.jpg',
-                  },
-                ],
-              },
-              replies: 4,
-              retweets: 5,
-              text: 'Hello fallback',
-              url: 'https://x.com/alice/status/123',
+  it('uses embedded preview providers by default', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          code: 200,
+          message: 'OK',
+          tweet: {
+            author: {
+              avatar_url: 'https://cdn.example/avatar.jpg',
+              name: 'Alice',
+              screen_name: 'alice',
             },
-          }),
-          { status: 200 }
-        )
-      );
+            created_at: 'Tue Mar 03 11:29:42 +0000 2026',
+            likes: 123,
+            media: {
+              all: [
+                {
+                  type: 'photo',
+                  url: 'https://cdn.example/photo.jpg',
+                },
+              ],
+            },
+            replies: 4,
+            retweets: 5,
+            text: 'Hello fallback',
+            url: 'https://x.com/alice/status/123',
+          },
+        }),
+        { status: 200 }
+      )
+    );
 
     await expect(
       getMediaPreview('https://x.com/alice/status/123')
@@ -142,8 +157,16 @@ describe('media-worker utils', () => {
     );
   });
 
-  it('translates media text through the worker', async () => {
-    mutableEnv.MEDIA_WORKER_BASE_URL = 'https://media-worker.example';
+  it('supports legacy media worker env aliases for remote mode', () => {
+    mutableEnv.MEDIA_WORKER_BASE_URL = 'https://legacy-worker.example';
+
+    expect(isMediaWorkerConfigured()).toBe(true);
+  });
+
+  it('translates media text through the embedded translate provider', async () => {
+    mutableEnv.MEDIA_MODE = 'embedded';
+    mutableEnv.TRANSLATE_PROVIDER = 'libretranslate';
+    mutableEnv.TRANSLATE_API_BASE_URL = 'https://translate.example';
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -166,12 +189,20 @@ describe('media-worker utils', () => {
     });
   });
 
-  it('returns an error result when GIF conversion fails', async () => {
-    mutableEnv.MEDIA_WORKER_BASE_URL = 'https://media-worker.example';
+  it('routes GIF conversion to the direct gif service in embedded mode', async () => {
+    mutableEnv.MEDIA_MODE = 'embedded';
+    mutableEnv.GIF_MODE = 'remote';
+    mutableEnv.GIF_SERVICE_BASE_URL = 'https://gif.example';
+    mutableEnv.GIF_SERVICE_TOKEN = 'gif-token';
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-      new Response(JSON.stringify({ error: 'GIF conversion failed' }), {
-        status: 502,
-      })
+      new Response(
+        JSON.stringify({
+          gifUrl: 'https://gif.example/artifacts/1.gif',
+          provider: 'render-gif',
+          status: 'ready',
+        }),
+        { status: 200 }
+      )
     );
 
     await expect(
@@ -184,10 +215,10 @@ describe('media-worker utils', () => {
       })
     ).resolves.toEqual({
       expiresAt: null,
-      gifUrl: null,
-      message: 'GIF conversion failed',
-      provider: null,
-      status: 'error',
+      gifUrl: 'https://gif.example/artifacts/1.gif',
+      message: null,
+      provider: 'render-gif',
+      status: 'ready',
     });
   });
 });
