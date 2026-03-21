@@ -37,7 +37,7 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "discord-api-types": "^0.38.41",
-    "eslint": "^10.0.2",
+    "eslint": "^10.1.0",
     "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
