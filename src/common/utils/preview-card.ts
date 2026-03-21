@@ -4,10 +4,14 @@ import type {
   APIEmbed,
 } from 'discord-api-types/v10';
 
+import {
+  isGifFeatureAvailable,
+  isTranslateFeatureAvailable,
+} from '@/common/configs/deployment';
 import type { GuildSettings } from '@/common/stores';
 
 import { buildPreviewActionCustomId } from './media-link';
-import type { MediaPreview } from './media-worker';
+import type { MediaPreview } from './media-types';
 import { formatUiDateTime, getUiText } from './ui-text';
 
 const ACTION_ROW_TYPE = 1;
@@ -50,7 +54,11 @@ const createActionRow = (
 ): APIActionRowComponent<APIButtonComponentWithCustomId> | null => {
   const components: APIButtonComponentWithCustomId[] = [];
 
-  if (settings.autoPreview.features.translate && trimText(preview.text, 200)) {
+  if (
+    isTranslateFeatureAvailable() &&
+    settings.autoPreview.features.translate &&
+    trimText(preview.text, 200)
+  ) {
     components.push({
       custom_id: buildPreviewActionCustomId(
         'translate',
@@ -64,6 +72,7 @@ const createActionRow = (
   }
 
   if (
+    isGifFeatureAvailable() &&
     settings.autoPreview.features.gif &&
     preview.media.some((item) => item.gifConvertible && item.sourceUrl)
   ) {

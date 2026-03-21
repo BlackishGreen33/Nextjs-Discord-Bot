@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GuildSettings {
+  guildId     String   @id @map("guild_id")
+  autoPreview Json     @map("auto_preview")
+  updatedAt   DateTime @map("updated_at")
+  updatedBy   String   @map("updated_by")
+
+  @@map("guild_settings")
+}
+
+model FaqEntry {
+  guildId   String   @map("guild_id")
+  key       String
+  answer    String
+  updatedAt DateTime @map("updated_at")
+  updatedBy String   @map("updated_by")
+
+  @@id([guildId, key])
+  @@map("faq_entries")
+}

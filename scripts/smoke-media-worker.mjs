@@ -2,7 +2,8 @@
 
 const DEFAULT_TWITTER_URL = 'https://x.com/jack/status/20';
 const DEFAULT_PIXIV_URL = 'https://www.pixiv.net/artworks/125459220';
-const DEFAULT_BLUESKY_URL = 'https://bsky.app/profile/bsky.app/post/3mgdqebsaqk2b';
+const DEFAULT_BLUESKY_URL =
+  'https://bsky.app/profile/bsky.app/post/3mgdqebsaqk2b';
 const DEFAULT_TRANSLATE_TARGET = 'zh-TW';
 const DEFAULT_TIMEOUT_MS = 20000;
 
@@ -32,17 +33,31 @@ const parseArgs = (argv) => {
 };
 
 const args = parseArgs(process.argv.slice(2));
-const workerBaseUrl = (args['worker-url'] ?? process.env.MEDIA_WORKER_BASE_URL ?? '').trim();
-const workerToken = (args.token ?? process.env.MEDIA_WORKER_TOKEN ?? '').trim();
+const workerBaseUrl = (
+  args['worker-url'] ??
+  process.env.MEDIA_SERVICE_BASE_URL ??
+  process.env.MEDIA_WORKER_BASE_URL ??
+  ''
+).trim();
+const workerToken = (
+  args.token ??
+  process.env.MEDIA_SERVICE_TOKEN ??
+  process.env.MEDIA_WORKER_TOKEN ??
+  ''
+).trim();
 const twitterUrl = (args['twitter-url'] ?? DEFAULT_TWITTER_URL).trim();
 const pixivUrl = (args['pixiv-url'] ?? DEFAULT_PIXIV_URL).trim();
 const blueskyUrl = (args['bluesky-url'] ?? DEFAULT_BLUESKY_URL).trim();
-const translateTarget = (args['translate-target'] ?? DEFAULT_TRANSLATE_TARGET).trim();
+const translateTarget = (
+  args['translate-target'] ?? DEFAULT_TRANSLATE_TARGET
+).trim();
 const gifMediaUrl = (args['gif-media-url'] ?? '').trim();
 const timeoutMs = Number(args.timeout ?? DEFAULT_TIMEOUT_MS);
 
 if (!workerBaseUrl) {
-  process.stderr.write('Missing worker URL. Set MEDIA_WORKER_BASE_URL or --worker-url.\n');
+  process.stderr.write(
+    'Missing media service URL. Set MEDIA_SERVICE_BASE_URL or --worker-url.\n'
+  );
   process.exit(2);
 }
 
@@ -105,9 +120,11 @@ const summarizePayload = (payload) => {
   }
 
   const maybeError = typeof payload.error === 'string' ? payload.error : null;
-  const maybePlatform = typeof payload.platform === 'string' ? payload.platform : null;
+  const maybePlatform =
+    typeof payload.platform === 'string' ? payload.platform : null;
   const maybeTitle = typeof payload.title === 'string' ? payload.title : null;
-  const maybeStatus = typeof payload.status === 'string' ? payload.status : null;
+  const maybeStatus =
+    typeof payload.status === 'string' ? payload.status : null;
 
   return [maybePlatform, maybeTitle, maybeStatus, maybeError]
     .filter(Boolean)
@@ -120,12 +137,15 @@ const addCheck = (name, pass, detail) => {
 };
 
 const run = async () => {
-  process.stdout.write(`Worker: ${workerBaseUrl}\n\n`);
+  process.stdout.write(`Media service: ${workerBaseUrl}\n\n`);
 
-  const twitterPreview = await postJson('/v1/preview', { sourceUrl: twitterUrl });
+  const twitterPreview = await postJson('/v1/preview', {
+    sourceUrl: twitterUrl,
+  });
   addCheck(
     'twitter preview returns 200',
-    twitterPreview.status === 200 && twitterPreview.payload?.platform === 'Twitter',
+    twitterPreview.status === 200 &&
+      twitterPreview.payload?.platform === 'Twitter',
     `http=${twitterPreview.status} ${twitterPreview.elapsedMs}ms ${summarizePayload(twitterPreview.payload)}`
   );
 
@@ -136,10 +156,13 @@ const run = async () => {
     `http=${pixivPreview.status} ${pixivPreview.elapsedMs}ms ${summarizePayload(pixivPreview.payload)}`
   );
 
-  const blueskyPreview = await postJson('/v1/preview', { sourceUrl: blueskyUrl });
+  const blueskyPreview = await postJson('/v1/preview', {
+    sourceUrl: blueskyUrl,
+  });
   addCheck(
     'bluesky preview returns 200',
-    blueskyPreview.status === 200 && blueskyPreview.payload?.platform === 'Bluesky',
+    blueskyPreview.status === 200 &&
+      blueskyPreview.payload?.platform === 'Bluesky',
     `http=${blueskyPreview.status} ${blueskyPreview.elapsedMs}ms ${summarizePayload(blueskyPreview.payload)}`
   );
 
@@ -170,7 +193,9 @@ const run = async () => {
 
   const failed = checks.filter((check) => !check.pass);
 
-  process.stdout.write(`\nSummary: ${checks.length - failed.length}/${checks.length} passed\n`);
+  process.stdout.write(
+    `\nSummary: ${checks.length - failed.length}/${checks.length} passed\n`
+  );
 
   if (failed.length > 0) {
     process.exit(1);

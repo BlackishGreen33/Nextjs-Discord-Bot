@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { REGISTER_COMMANDS_KEY } from '@/common/configs';
+import { getStorageDriver } from '@/common/configs/deployment';
 import {
   createRequestLogger,
   discord_api,
@@ -84,6 +85,10 @@ const runUpstashCommand = async (
 
 const isRateLimited = async (clientIp: string) => {
   const key = `${RATE_LIMIT_KEY_PREFIX}:${clientIp}`;
+
+  if (getStorageDriver() !== 'redis') {
+    return isRateLimitedInMemory(clientIp);
+  }
 
   try {
     const currentCount = await runUpstashCommand('incr', key);

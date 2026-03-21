@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "gateway:listen": "node worker/gateway-listener/index.mjs",
+    "gateway:listen": "tsx worker/gateway-listener/index.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
     "worker:smoke": "node scripts/smoke-media-worker.mjs",
     "lint": "eslint .",
     "test": "vitest run",
@@ -16,10 +18,12 @@
   },
   "dependencies": {
     "@discordjs/builders": "^1.13.1",
+    "@prisma/client": "^6.19.2",
     "discord.js": "^14.25.1",
     "next": "16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "tsx": "^4.21.0",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
@@ -41,6 +45,7 @@
     "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "prisma": "^6.19.2",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
