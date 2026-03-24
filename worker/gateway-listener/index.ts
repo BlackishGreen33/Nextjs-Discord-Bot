@@ -3,7 +3,6 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import { createServer } from 'node:http';
 
-import { buildPreviewFiles } from './preview-attachments.mjs';
 import {
   DEFAULT_GUILD_SETTINGS,
   getGuildSettingsStore,
@@ -14,6 +13,7 @@ import {
   inferPlatformFromUrl,
 } from '../../src/common/utils';
 import { buildPreviewMessagePayload } from '../../src/common/utils/preview-card';
+import { buildPreviewFiles } from './preview-attachments.mjs';
 
 const token = process.env.DISCORD_GATEWAY_TOKEN ?? process.env.BOT_TOKEN;
 const port = Number.parseInt(process.env.PORT ?? '', 10);
