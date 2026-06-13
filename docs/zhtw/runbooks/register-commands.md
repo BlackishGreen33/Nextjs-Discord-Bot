@@ -18,6 +18,12 @@
 - 已知正式環境的 Next.js App URL
 - 正式環境的 `/api/discord-bot/register-commands` 可連通
 
+目前維運中的部署請使用：
+
+- `https://nextjs-discord-bot-eta.vercel.app`
+
+除非已明確關閉 deployment protection，不要把受保護的 team 或 git-main aliases 當成 Discord 對外網址。
+
 ## 請求格式
 
 ```http
@@ -57,3 +63,5 @@ curl -X POST \
 - 此端點目前有 rate limit：每 IP 每分鐘最多 `5` 次
 - 開發環境可由首頁按鈕觸發註冊，不需同樣的正式流程
 - 若註冊成功但 Discord client 尚未立即刷新，可稍等幾分鐘再重新開啟 slash command 選單
+- `pnpm production:check` 可檢查正式 web URL、Discord endpoint、media worker 與可選 listener health URL
+- `pnpm production:check` 預設不會重新註冊 commands；只有加上 `--register-commands` 才會執行

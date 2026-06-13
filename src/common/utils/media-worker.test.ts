@@ -157,6 +157,71 @@ describe('media-worker utils', () => {
     );
   });
 
+  it('falls back across embedded Twitter providers', async () => {
+    mutableEnv.FXEMBED_PUBLIC_BASE_URL = 'https://primary.example';
+    mutableEnv.FXEMBED_FALLBACK_BASE_URL = 'https://fallback.example';
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            tweet: {
+              author: {
+                name: 'Alice',
+                screen_name: 'alice',
+              },
+              text: 'Recovered by fallback',
+              url: 'https://x.com/alice/status/123',
+            },
+          }),
+          { status: 200 }
+        )
+      );
+
+    await expect(
+      getMediaPreview('https://x.com/alice/status/123')
+    ).resolves.toEqual(
+      expect.objectContaining({
+        authorHandle: '@alice',
+        platform: 'Twitter',
+        text: 'Recovered by fallback',
+      })
+    );
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      1,
+      'https://primary.example/alice/status/123',
+      undefined
+    );
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      5,
+      'https://fallback.example/alice/status/123',
+      undefined
+    );
+  });
+
+  it('returns a minimal embedded Twitter preview when providers fail', async () => {
+    mutableEnv.FXEMBED_PUBLIC_BASE_URL = 'https://primary.example';
+    mutableEnv.FXEMBED_FALLBACK_BASE_URL = 'https://fallback.example';
+    vi.spyOn(global, 'fetch').mockResolvedValue(
+      new Response('forbidden', { status: 403 })
+    );
+
+    await expect(
+      getMediaPreview('https://x.com/alice/status/123')
+    ).resolves.toEqual(
+      expect.objectContaining({
+        canonicalUrl: 'https://x.com/alice/status/123',
+        media: [],
+        platform: 'Twitter',
+        sourceUrl: 'https://x.com/alice/status/123',
+        title: 'Twitter post',
+      })
+    );
+  });
+
   it('supports legacy media worker env aliases for remote mode', () => {
     mutableEnv.MEDIA_WORKER_BASE_URL = 'https://legacy-worker.example';
 

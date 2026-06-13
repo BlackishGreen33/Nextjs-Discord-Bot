@@ -18,6 +18,13 @@ This document explains how to re-register slash commands in production.
 - you know the production Next.js app URL
 - the production `/api/discord-bot/register-commands` endpoint is reachable
 
+For the maintained deployment, use:
+
+- `https://nextjs-discord-bot-eta.vercel.app`
+
+Do not use the protected team or git-main aliases as Discord-facing URLs unless
+deployment protection has explicitly been disabled for them.
+
 ## Request Shape
 
 ```http
@@ -57,3 +64,5 @@ then wait for the `Retry-After` header and retry later.
 - the endpoint is rate-limited to `5` requests per IP per minute
 - in development, registration can be triggered from the home page button instead of the production flow
 - if Discord does not refresh immediately after a successful registration, wait a few minutes and reopen the slash command menu
+- `pnpm production:check` verifies the public web URL, Discord endpoint, media worker, and optional listener health URL
+- `pnpm production:check` does not re-register commands unless you pass `--register-commands`

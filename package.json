@@ -2,6 +2,7 @@
   "name": "nextjs-discord-bot",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,6 +10,7 @@
     "gateway:listen": "tsx worker/gateway-listener/index.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
+    "production:check": "node scripts/check-production-health.mjs",
     "worker:smoke": "node scripts/smoke-media-worker.mjs",
     "lint": "eslint .",
     "test": "vitest run",

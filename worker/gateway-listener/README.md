@@ -67,8 +67,8 @@ pnpm gateway:listen
 
 ## Render Standard Notes
 
-- Build command: `pnpm install && pnpm prisma:generate`
-- Start command: `pnpm gateway:listen`
+- Build command: `corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate`
+- Start command: `./node_modules/.bin/tsx worker/gateway-listener/index.ts`
 - Health check path: `/healthz`
 
 Choose a region that can pass both:

@@ -9,9 +9,9 @@ import {
 } from '../../src/common/stores';
 import {
   extractFirstSupportedMediaUrl,
-  getMediaPreview,
   inferPlatformFromUrl,
-} from '../../src/common/utils';
+} from '../../src/common/utils/media-link';
+import { getMediaPreview } from '../../src/common/utils/media-worker';
 import { buildPreviewMessagePayload } from '../../src/common/utils/preview-card';
 import { buildPreviewFiles } from './preview-attachments.mjs';
 

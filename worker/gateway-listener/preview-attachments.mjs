@@ -56,7 +56,13 @@ const getAttachmentConfig = (env) => ({
   ),
 });
 
-const buildAttachmentName = ({ contentType, index, platform, sourceUrl, type }) => {
+const buildAttachmentName = ({
+  contentType,
+  index,
+  platform,
+  sourceUrl,
+  type,
+}) => {
   const extension =
     EXTENSION_BY_CONTENT_TYPE[contentType] ??
     getExtensionFromUrl(sourceUrl) ??
@@ -123,7 +129,9 @@ const buildAttachmentFromMedia = async (
       return null;
     }
 
-    const contentType = normalizeContentType(response.headers.get('content-type'));
+    const contentType = normalizeContentType(
+      response.headers.get('content-type')
+    );
 
     if (!isRenderableContentType(contentType)) {
       return null;
@@ -178,14 +186,22 @@ export const buildPreviewFiles = async (
             item &&
             typeof item.sourceUrl === 'string' &&
             item.sourceUrl.length > 0 &&
-            (item.type === 'gif' || item.type === 'image' || item.type === 'video')
+            (item.type === 'gif' ||
+              item.type === 'image' ||
+              item.type === 'video')
         )
         .slice(0, config.maxItems)
     : [];
 
   const files = await Promise.all(
     candidates.map((item, index) =>
-      buildAttachmentFromMedia(item, index, preview.platform ?? 'preview', config, fetchImpl)
+      buildAttachmentFromMedia(
+        item,
+        index,
+        preview.platform ?? 'preview',
+        config,
+        fetchImpl
+      )
     )
   );
 

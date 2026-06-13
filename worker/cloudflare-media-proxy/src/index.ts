@@ -371,8 +371,9 @@ const fetchTwitterApiPayload = async (
   const paths = Array.from(
     new Set(
       [
-        `/status/${statusId}`,
         handle ? `/${handle}/status/${statusId}` : null,
+        `/status/${statusId}`,
+        `/i/status/${statusId}`,
         `/Twitter/status/${statusId}`,
       ].filter((value): value is string => Boolean(value))
     )
@@ -391,6 +392,24 @@ const fetchTwitterApiPayload = async (
   throw lastError ?? new Error('Twitter preview provider did not return data.');
 };
 
+const createMinimalTwitterPreview = (sourceUrl: string): StandardPreview => ({
+  authorAvatarUrl: null,
+  authorHandle: null,
+  authorName: null,
+  canonicalUrl: sourceUrl,
+  likes: null,
+  media: [],
+  platform: 'Twitter',
+  publishedAt: null,
+  replies: null,
+  reposts: null,
+  sensitive: false,
+  sourceUrl,
+  text: null,
+  title: 'Twitter post',
+  translatedText: null,
+});
+
 const fetchTwitterPreview = async (
   env: Env,
   sourceUrl: string
@@ -402,14 +421,20 @@ const fetchTwitterPreview = async (
     throw new Error('Twitter status ID could not be parsed.');
   }
 
-  const payload = await tryBases<JsonRecord>(
-    [
-      env.FXEMBED_PUBLIC_BASE_URL ?? DEFAULT_FXEMBED_PUBLIC_BASE_URL,
-      env.FXEMBED_FALLBACK_BASE_URL,
-      DEFAULT_VXTWITTER_PUBLIC_BASE_URL,
-    ],
-    (baseUrl) => fetchTwitterApiPayload(baseUrl, statusId, handle)
-  );
+  let payload: JsonRecord;
+
+  try {
+    payload = await tryBases<JsonRecord>(
+      [
+        env.FXEMBED_PUBLIC_BASE_URL ?? DEFAULT_FXEMBED_PUBLIC_BASE_URL,
+        env.FXEMBED_FALLBACK_BASE_URL,
+        DEFAULT_VXTWITTER_PUBLIC_BASE_URL,
+      ],
+      (baseUrl) => fetchTwitterApiPayload(baseUrl, statusId, handle)
+    );
+  } catch {
+    return createMinimalTwitterPreview(sourceUrl);
+  }
 
   const tweet =
     payload.tweet && typeof payload.tweet === 'object'

@@ -10,7 +10,8 @@
 
 - `web` + `listener` + `db`
 - `STORAGE_DRIVER=prisma`
-- `MEDIA_MODE=embedded`
+- `MEDIA_MODE=remote`
+- `MEDIA_SERVICE_BASE_URL` 指向已部署的 media worker
 - `gif-worker` 按需外挂
 
 listener 的职责是：
@@ -88,6 +89,22 @@ listener 的职责是：
 > [!NOTE]
 > 外部保活只能降低免费服务休眠造成的冷启动影响，不能解决 Discord / Cloudflare 对特定 region 出站流量的限制。
 
+## Listener 必要环境变量
+
+在 listener service 设置：
+
+- Render instance plan: `standard`
+- `BOT_TOKEN` 或 `DISCORD_GATEWAY_TOKEN`
+- `STORAGE_DRIVER=prisma`
+- `DATABASE_URL`
+- `MEDIA_MODE=remote`
+- `MEDIA_SERVICE_BASE_URL=https://discord-media-proxy.b-g-59c.workers.dev`
+- `MEDIA_SERVICE_TOKEN`
+- `GIF_MODE=disabled`
+- `TRANSLATE_PROVIDER=disabled`
+
+旧别名 `MEDIA_WORKER_BASE_URL` 和 `MEDIA_WORKER_TOKEN` 仍可用，但新部署请优先使用 `MEDIA_SERVICE_*`。
+
 ## 部署更新流程
 
 ### 1. 修改 listener 程序
@@ -116,6 +133,13 @@ Render Web Service 会按配置的 branch 自动 redeploy。
 2. `gatewayPhase = "ready"`
 3. `restProbe.ok = true`
 4. `gatewayLastError = null` 或没有持续变化中的错误
+
+也可以执行：
+
+```bash
+LISTENER_HEALTH_URL="https://<your-render-service>.onrender.com/healthz" \
+pnpm production:check
+```
 
 ### 4. Discord 实测
 

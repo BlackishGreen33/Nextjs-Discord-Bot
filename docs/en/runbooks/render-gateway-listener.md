@@ -10,7 +10,8 @@ This runbook assumes the repository's recommended deployment profile:
 
 - `web` + `listener` + `db`
 - `STORAGE_DRIVER=prisma`
-- `MEDIA_MODE=embedded`
+- `MEDIA_MODE=remote`
+- `MEDIA_SERVICE_BASE_URL` points at the deployed media worker
 - optional remote `gif-worker`
 
 The listener is responsible for:
@@ -88,6 +89,23 @@ A healthy `/healthz` response should look roughly like this:
 > [!NOTE]
 > A keepalive monitor can reduce cold starts on free services. It cannot solve Discord or Cloudflare blocking a specific region's outbound traffic.
 
+## Required Listener Environment
+
+Set these values on the listener service:
+
+- Render instance plan: `standard`
+- `BOT_TOKEN` or `DISCORD_GATEWAY_TOKEN`
+- `STORAGE_DRIVER=prisma`
+- `DATABASE_URL`
+- `MEDIA_MODE=remote`
+- `MEDIA_SERVICE_BASE_URL=https://discord-media-proxy.b-g-59c.workers.dev`
+- `MEDIA_SERVICE_TOKEN`
+- `GIF_MODE=disabled`
+- `TRANSLATE_PROVIDER=disabled`
+
+The legacy aliases `MEDIA_WORKER_BASE_URL` and `MEDIA_WORKER_TOKEN` still work,
+but prefer the `MEDIA_SERVICE_*` names for new deployments.
+
 ## Deployment Update Flow
 
 ### 1. Update the listener code
@@ -116,6 +134,13 @@ After deployment, verify:
 2. `gatewayPhase = "ready"`
 3. `restProbe.ok = true`
 4. `gatewayLastError = null` or at least not continuously changing
+
+You can also run:
+
+```bash
+LISTENER_HEALTH_URL="https://<your-render-service>.onrender.com/healthz" \
+pnpm production:check
+```
 
 ### 4. Verify behavior in Discord
 

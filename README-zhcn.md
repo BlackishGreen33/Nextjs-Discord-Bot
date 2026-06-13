@@ -140,6 +140,10 @@ GIF_MODE=disabled
 TRANSLATE_PROVIDER=disabled
 ```
 
+生产 listener service 请改用 `MEDIA_MODE=remote`，并设置
+`MEDIA_SERVICE_BASE_URL=https://discord-media-proxy.b-g-59c.workers.dev` 与
+`MEDIA_SERVICE_TOKEN`。
+
 ### 3. 创建 Postgres 并应用 schema
 
 创建 **Render Postgres**，并把 `DATABASE_URL` 同时提供给：
@@ -157,16 +161,18 @@ pnpm prisma:push
 
 建议的 Render Web Service 设置：
 
-- Build command: `pnpm install && pnpm prisma:generate && pnpm build`
-- Start command: `pnpm start`
+- Build command: `corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate && pnpm build`
+- Start command: `./node_modules/.bin/next start`
 
 ### 5. 部署 gateway listener
 
 建议的 Render Web Service 设置：
 
-- Build command: `pnpm install && pnpm prisma:generate`
-- Start command: `pnpm gateway:listen`
+- Build command: `corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate`
+- Start command: `./node_modules/.bin/tsx worker/gateway-listener/index.ts`
 - Health check path: `/healthz`
+- Instance plan: `standard`
+- Media mode: `MEDIA_MODE=remote` 搭配 `MEDIA_SERVICE_BASE_URL` 与 `MEDIA_SERVICE_TOKEN`
 
 注意：
 
@@ -189,6 +195,7 @@ pnpm prisma:push
 确认：
 
 - `https://<listener>/healthz`
+- `pnpm production:check`
 - guild 内 `/settings` 与 `/faq`
 - 在 guild 频道发送新的 `x.com`、`pixiv.net`、`bsky.app` 链接
 
@@ -288,16 +295,17 @@ pnpm prisma:push
 
 ## Development Commands
 
-| 命令                   | 用途                                       |
-| ---------------------- | ------------------------------------------ |
-| `pnpm dev`             | 启动本地开发服务器                         |
-| `pnpm build`           | 构建 production bundle                     |
-| `pnpm start`           | 启动 production server                     |
-| `pnpm gateway:listen`  | 启动 gateway listener                      |
-| `pnpm prisma:generate` | 生成 Prisma client                         |
-| `pnpm prisma:push`     | 将 Prisma schema 应用到数据库              |
-| `pnpm worker:smoke`    | 对 live remote media service 做 smoke test |
-| `pnpm lint`            | 运行 ESLint                                |
-| `pnpm typecheck`       | 运行 `tsc --noEmit`                        |
-| `pnpm test`            | 运行 Vitest                                |
-| `pnpm prettier`        | 运行 Prettier                              |
+| 命令                    | 用途                                        |
+| ----------------------- | ------------------------------------------- |
+| `pnpm dev`              | 启动本地开发服务器                          |
+| `pnpm build`            | 构建 production bundle                      |
+| `pnpm start`            | 启动 production server                      |
+| `pnpm gateway:listen`   | 启动 gateway listener                       |
+| `pnpm prisma:generate`  | 生成 Prisma client                          |
+| `pnpm prisma:push`      | 将 Prisma schema 应用到数据库               |
+| `pnpm production:check` | 检查 production web、media、listener health |
+| `pnpm worker:smoke`     | 对 live remote media service 做 smoke test  |
+| `pnpm lint`             | 运行 ESLint                                 |
+| `pnpm typecheck`        | 运行 `tsc --noEmit`                         |
+| `pnpm test`             | 运行 Vitest                                 |
+| `pnpm prettier`         | 运行 Prettier                               |

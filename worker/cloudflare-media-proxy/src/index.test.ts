@@ -91,7 +91,10 @@ describe('cloudflare media proxy', () => {
   });
 
   it('falls back to vxTwitter payload shape when fxTwitter fails', async () => {
-    vi.spyOn(globalThis, 'fetch')
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('unauthorized', { status: 401 }))
+      .mockResolvedValueOnce(new Response('unauthorized', { status: 401 }))
       .mockResolvedValueOnce(new Response('unauthorized', { status: 401 }))
       .mockResolvedValueOnce(
         new Response(
@@ -135,6 +138,101 @@ describe('cloudflare media proxy', () => {
       expect.objectContaining({
         previewUrl: 'https://pbs.twimg.com/media/full.jpg',
         type: 'image',
+      })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      'https://api.vxtwitter.com/Twitter/status/1577730467436138524',
+      undefined
+    );
+  });
+
+  it('tries the configured Twitter fallback provider before vxTwitter', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(new Response('forbidden', { status: 403 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            tweet: {
+              author: {
+                name: 'Alice',
+                screen_name: 'alice',
+              },
+              text: 'Recovered by configured fallback',
+              url: 'https://x.com/alice/status/123',
+            },
+          }),
+          { status: 200 }
+        )
+      );
+
+    const response = await worker.fetch(
+      createRequest('/v1/preview', {
+        sourceUrl: 'https://x.com/alice/status/123',
+      }),
+      {
+        ...env,
+        FXEMBED_FALLBACK_BASE_URL: 'https://fallback.example',
+        FXEMBED_PUBLIC_BASE_URL: 'https://primary.example',
+      }
+    );
+    const body = (await response.json()) as {
+      authorHandle: string;
+      platform: string;
+      text: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual(
+      expect.objectContaining({
+        authorHandle: '@alice',
+        platform: 'Twitter',
+        text: 'Recovered by configured fallback',
+      })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://primary.example/alice/status/123',
+      undefined
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      'https://fallback.example/alice/status/123',
+      undefined
+    );
+  });
+
+  it('returns a minimal Twitter preview when all providers fail', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('forbidden', { status: 403 })
+    );
+
+    const response = await worker.fetch(
+      createRequest('/v1/preview', {
+        sourceUrl: 'https://x.com/alice/status/123',
+      }),
+      env
+    );
+    const body = (await response.json()) as {
+      canonicalUrl: string;
+      media: unknown[];
+      platform: string;
+      sourceUrl: string;
+      title: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual(
+      expect.objectContaining({
+        canonicalUrl: 'https://x.com/alice/status/123',
+        media: [],
+        platform: 'Twitter',
+        sourceUrl: 'https://x.com/alice/status/123',
+        title: 'Twitter post',
       })
     );
   });

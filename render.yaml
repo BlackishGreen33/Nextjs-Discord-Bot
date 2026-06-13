@@ -3,9 +3,9 @@ services:
     name: discord-bot-web
     runtime: node
     autoDeployTrigger: off
-    buildCommand: pnpm install && pnpm prisma:generate && pnpm build
+    buildCommand: corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate && pnpm build
     preDeployCommand: pnpm prisma:push
-    startCommand: pnpm start
+    startCommand: ./node_modules/.bin/next start
     envVars:
       - key: NEXT_PUBLIC_APPLICATION_ID
         sync: false
@@ -31,9 +31,10 @@ services:
   - type: web
     name: discord-bot-listener
     runtime: node
+    plan: standard
     autoDeployTrigger: off
-    buildCommand: pnpm install && pnpm prisma:generate
-    startCommand: pnpm gateway:listen
+    buildCommand: corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate
+    startCommand: ./node_modules/.bin/tsx worker/gateway-listener/index.ts
     healthCheckPath: /healthz
     envVars:
       - key: BOT_TOKEN
@@ -45,7 +46,11 @@ services:
           name: discord-bot-db
           property: connectionString
       - key: MEDIA_MODE
-        value: embedded
+        value: remote
+      - key: MEDIA_SERVICE_BASE_URL
+        value: https://discord-media-proxy.b-g-59c.workers.dev
+      - key: MEDIA_SERVICE_TOKEN
+        sync: false
       - key: GIF_MODE
         value: disabled
       - key: TRANSLATE_PROVIDER

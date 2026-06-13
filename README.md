@@ -203,6 +203,10 @@ GIF_MODE=disabled
 TRANSLATE_PROVIDER=disabled
 ```
 
+For the listener service in production, set `MEDIA_MODE=remote`,
+`MEDIA_SERVICE_BASE_URL=https://discord-media-proxy.b-g-59c.workers.dev`, and
+`MEDIA_SERVICE_TOKEN`.
+
 #### 2. Provision Postgres and apply the schema
 
 Create a shared Postgres database for:
@@ -218,14 +222,16 @@ pnpm prisma:push
 
 #### 3. Deploy the web service
 
-- Build command: `pnpm install && pnpm prisma:generate && pnpm build`
-- Start command: `pnpm start`
+- Build command: `corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate && pnpm build`
+- Start command: `./node_modules/.bin/next start`
 
 #### 4. Deploy the gateway listener
 
-- Build command: `pnpm install && pnpm prisma:generate`
-- Start command: `pnpm gateway:listen`
+- Build command: `corepack enable && corepack prepare pnpm@10.32.1 --activate && pnpm install --frozen-lockfile && pnpm prisma:generate`
+- Start command: `./node_modules/.bin/tsx worker/gateway-listener/index.ts`
 - Health check path: `/healthz`
+- Instance plan: `standard`
+- Media mode: `MEDIA_MODE=remote` with `MEDIA_SERVICE_BASE_URL` and `MEDIA_SERVICE_TOKEN`
 
 #### 5. Register commands and validate
 
@@ -233,6 +239,7 @@ Check:
 
 - `POST /api/discord-bot/register-commands`
 - `https://<listener>/healthz`
+- `pnpm production:check`
 - `/settings` and `/faq` in a guild
 - A fresh `x.com`, `pixiv.net`, or `bsky.app` link in a guild channel
 
@@ -328,20 +335,21 @@ The project still accepts these aliases for one deprecation cycle:
 
 ## Development Commands
 
-| Command                | Purpose                                            |
-| ---------------------- | -------------------------------------------------- |
-| `pnpm install`         | Install dependencies                               |
-| `pnpm dev`             | Start the local development server                 |
-| `pnpm build`           | Build the production bundle                        |
-| `pnpm start`           | Start the production server                        |
-| `pnpm gateway:listen`  | Start the Discord Gateway listener                 |
-| `pnpm prisma:generate` | Generate the Prisma client                         |
-| `pnpm prisma:push`     | Apply the Prisma schema to the configured database |
-| `pnpm worker:smoke`    | Smoke test a live remote media service             |
-| `pnpm lint`            | Run ESLint                                         |
-| `pnpm typecheck`       | Run `tsc --noEmit`                                 |
-| `pnpm test`            | Run Vitest                                         |
-| `pnpm prettier`        | Run Prettier                                       |
+| Command                 | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `pnpm install`          | Install dependencies                               |
+| `pnpm dev`              | Start the local development server                 |
+| `pnpm build`            | Build the production bundle                        |
+| `pnpm start`            | Start the production server                        |
+| `pnpm gateway:listen`   | Start the Discord Gateway listener                 |
+| `pnpm prisma:generate`  | Generate the Prisma client                         |
+| `pnpm prisma:push`      | Apply the Prisma schema to the configured database |
+| `pnpm production:check` | Check production web, media, and listener health   |
+| `pnpm worker:smoke`     | Smoke test a live remote media service             |
+| `pnpm lint`             | Run ESLint                                         |
+| `pnpm typecheck`        | Run `tsc --noEmit`                                 |
+| `pnpm test`             | Run Vitest                                         |
+| `pnpm prettier`         | Run Prettier                                       |
 
 ## License
 
