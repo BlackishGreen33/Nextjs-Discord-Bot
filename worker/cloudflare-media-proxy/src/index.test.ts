@@ -689,6 +689,47 @@ describe('cloudflare media proxy', () => {
     });
   });
 
+  it('splits long Workers AI translation requests into safer chunks', async () => {
+    const aiRun = vi
+      .fn()
+      .mockResolvedValueOnce({
+        translated_text: '你的 AI 代理寫了 80 行程式碼。',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '認識 Ponytail 外掛。',
+      });
+
+    const response = await worker.fetch(
+      createRequest('/v1/translate', {
+        sourceUrl: 'https://x.com/alice/status/123',
+        targetLanguage: 'zh-TW',
+        text: `${'AI agent kamu nulis 80 baris code buat yang sebenarnya cuma butuh 1 baris? '.repeat(5).trim()}\n\nKenalan sama Ponytail plugin yang bikin AI coding agent berpikir seperti laziest senior dev di dunia.`,
+      }),
+      {
+        ...env,
+        AI: {
+          run: aiRun,
+        },
+        TRANSLATE_PROVIDER: 'workers-ai',
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      provider: 'workers-ai',
+      translatedText: '你的 AI 代理寫了 80 行程式碼。\n\n認識 Ponytail 外掛。',
+    });
+    expect(aiRun).toHaveBeenCalledTimes(2);
+    expect(aiRun).toHaveBeenNthCalledWith(
+      1,
+      '@cf/meta/m2m100-1.2b',
+      expect.objectContaining({
+        source_lang: 'indonesian',
+        target_lang: 'chinese',
+      })
+    );
+  });
+
   it('proxies GIF requests to the configured GIF service', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(

@@ -93,6 +93,7 @@ const SENSITIVE_LABEL_HINTS = [
   'suggestive',
 ];
 const WORKERS_AI_TRANSLATE_MODEL = '@cf/meta/m2m100-1.2b';
+const WORKERS_AI_TRANSLATE_CHUNK_LENGTH = 320;
 
 const jsonResponse = (data: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(data), {
@@ -1081,6 +1082,83 @@ const inferWorkersAiSourceLanguage = (value: string) => {
   return 'english';
 };
 
+const splitWorkersAiTranslateText = (value: string) => {
+  const paragraphs = value
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const chunks: string[] = [];
+  let currentChunk = '';
+
+  const pushChunk = () => {
+    if (currentChunk) {
+      chunks.push(currentChunk);
+      currentChunk = '';
+    }
+  };
+
+  for (const paragraph of paragraphs) {
+    if (paragraph.length > WORKERS_AI_TRANSLATE_CHUNK_LENGTH) {
+      pushChunk();
+
+      const lines = paragraph
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      for (const line of lines) {
+        if (line.length > WORKERS_AI_TRANSLATE_CHUNK_LENGTH) {
+          chunks.push(line);
+          continue;
+        }
+
+        if (
+          currentChunk.length + line.length + 1 >
+          WORKERS_AI_TRANSLATE_CHUNK_LENGTH
+        ) {
+          pushChunk();
+        }
+
+        currentChunk = currentChunk ? `${currentChunk}\n${line}` : line;
+      }
+
+      pushChunk();
+      continue;
+    }
+
+    if (
+      currentChunk.length + paragraph.length + 2 >
+      WORKERS_AI_TRANSLATE_CHUNK_LENGTH
+    ) {
+      pushChunk();
+    }
+
+    currentChunk = currentChunk ? `${currentChunk}\n\n${paragraph}` : paragraph;
+  }
+
+  pushChunk();
+
+  return chunks.length > 0 ? chunks : [value.trim()];
+};
+
+const translateWorkersAiChunk = async (
+  env: Env,
+  targetLanguage: string,
+  text: string
+) => {
+  const result = (await env.AI?.run(WORKERS_AI_TRANSLATE_MODEL, {
+    source_lang: inferWorkersAiSourceLanguage(text),
+    target_lang: targetLanguage,
+    text,
+  })) as JsonRecord;
+
+  return (
+    asStringOrNull(result.translated_text) ??
+    asStringOrNull(result.translatedText)
+  );
+};
+
 const handleWorkersAiTranslate = async (
   env: Env,
   payload: {
@@ -1092,22 +1170,26 @@ const handleWorkersAiTranslate = async (
     return errorResponse(503, 'Workers AI binding is not configured.');
   }
 
-  const result = (await env.AI.run(WORKERS_AI_TRANSLATE_MODEL, {
-    source_lang: inferWorkersAiSourceLanguage(payload.text),
-    target_lang: getWorkersAiTargetLanguage(payload.targetLanguage),
-    text: payload.text,
-  })) as JsonRecord;
-  const translatedText =
-    asStringOrNull(result.translated_text) ??
-    asStringOrNull(result.translatedText);
+  const targetLanguage = getWorkersAiTargetLanguage(payload.targetLanguage);
+  const translatedChunks: string[] = [];
 
-  if (!translatedText) {
-    return errorResponse(502, 'Workers AI did not return translated text.');
+  for (const chunk of splitWorkersAiTranslateText(payload.text)) {
+    const translatedText = await translateWorkersAiChunk(
+      env,
+      targetLanguage,
+      chunk
+    );
+
+    if (!translatedText) {
+      return errorResponse(502, 'Workers AI did not return translated text.');
+    }
+
+    translatedChunks.push(translatedText);
   }
 
   return jsonResponse({
     provider: 'workers-ai',
-    translatedText,
+    translatedText: translatedChunks.join('\n\n'),
   });
 };
 
