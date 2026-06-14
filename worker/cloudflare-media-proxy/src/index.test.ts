@@ -661,6 +661,34 @@ describe('cloudflare media proxy', () => {
     });
   });
 
+  it('detects Indonesian text for Workers AI translation', async () => {
+    const aiRun = vi.fn().mockResolvedValue({
+      translated_text: '你的 AI 代理寫了 80 行程式碼。',
+    });
+
+    const response = await worker.fetch(
+      createRequest('/v1/translate', {
+        sourceUrl: 'https://x.com/alice/status/123',
+        targetLanguage: 'zh-TW',
+        text: 'AI agent kamu nulis 80 baris code buat yang sebenarnya cuma butuh 1 baris?',
+      }),
+      {
+        ...env,
+        AI: {
+          run: aiRun,
+        },
+        TRANSLATE_PROVIDER: 'workers-ai',
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(aiRun).toHaveBeenCalledWith('@cf/meta/m2m100-1.2b', {
+      source_lang: 'indonesian',
+      target_lang: 'chinese',
+      text: 'AI agent kamu nulis 80 baris code buat yang sebenarnya cuma butuh 1 baris?',
+    });
+  });
+
   it('proxies GIF requests to the configured GIF service', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(

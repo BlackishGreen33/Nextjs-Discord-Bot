@@ -1055,6 +1055,32 @@ const getWorkersAiTargetLanguage = (value: string) => {
   return 'english';
 };
 
+const inferWorkersAiSourceLanguage = (value: string) => {
+  if (/[\u3040-\u30ff]/.test(value)) {
+    return 'japanese';
+  }
+
+  if (/[\uac00-\ud7af]/.test(value)) {
+    return 'korean';
+  }
+
+  if (/[\u4e00-\u9fff]/.test(value)) {
+    return 'chinese';
+  }
+
+  const normalized = value.toLowerCase();
+
+  if (
+    /\b(aku|anda|buat|cara|dan|dengan|dia|ini|kamu|kenalan|yang)\b/.test(
+      normalized
+    )
+  ) {
+    return 'indonesian';
+  }
+
+  return 'english';
+};
+
 const handleWorkersAiTranslate = async (
   env: Env,
   payload: {
@@ -1067,7 +1093,7 @@ const handleWorkersAiTranslate = async (
   }
 
   const result = (await env.AI.run(WORKERS_AI_TRANSLATE_MODEL, {
-    source_lang: 'english',
+    source_lang: inferWorkersAiSourceLanguage(payload.text),
     target_lang: getWorkersAiTargetLanguage(payload.targetLanguage),
     text: payload.text,
   })) as JsonRecord;
