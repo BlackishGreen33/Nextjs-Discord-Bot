@@ -8,6 +8,25 @@ const guildSettingsStoreMock = {
 const discordGetMock = vi.fn();
 
 vi.mock('@/common/stores', () => ({
+  DEFAULT_GUILD_SETTINGS: {
+    autoPreview: {
+      enabled: true,
+      features: {
+        gif: true,
+        translate: true,
+      },
+      nsfwMode: false,
+      outputMode: 'embed',
+      platforms: {
+        bluesky: true,
+        pixiv: true,
+        twitter: true,
+      },
+      translationTarget: 'zh-TW',
+    },
+    updatedAt: '',
+    updatedBy: '',
+  },
   getGuildSettingsStore: () => guildSettingsStoreMock,
 }));
 
@@ -76,30 +95,43 @@ describe('/settings command', () => {
     expect(response.data.content).toContain('設定面板只能在伺服器內使用');
   });
 
-  it('returns ephemeral error when settings storage is unavailable', async () => {
+  it('opens an admin panel with defaults when settings storage is unavailable', async () => {
     guildSettingsStoreMock.isAvailable.mockReturnValue(false);
 
     const response = (await execute(buildInteraction())) as {
-      data: { content: string; flags: number };
+      data: {
+        components: unknown[];
+        embeds: Array<{ description?: string; title?: string }>;
+        flags?: number;
+      };
       type: number;
     };
 
-    expect(response.data.flags).toBe(64);
-    expect(response.data.content).toContain('尚未設定儲存層');
+    expect(guildSettingsStoreMock.get).not.toHaveBeenCalled();
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBeUndefined();
+    expect(response.data.components).toHaveLength(1);
+    expect(response.data.embeds[0]?.title).toContain('設定選單');
   });
 
-  it('returns ephemeral error when settings storage cannot be read', async () => {
+  it('opens an admin panel with defaults when settings storage cannot be read', async () => {
     guildSettingsStoreMock.get.mockRejectedValue(
       new Error('redis unavailable')
     );
 
     const response = (await execute(buildInteraction())) as {
-      data: { content: string; flags: number };
+      data: {
+        components: unknown[];
+        embeds: Array<{ description?: string; title?: string }>;
+        flags?: number;
+      };
       type: number;
     };
 
-    expect(response.data.flags).toBe(64);
-    expect(response.data.content).toContain('尚未設定儲存層');
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBeUndefined();
+    expect(response.data.components).toHaveLength(1);
+    expect(response.data.embeds[0]?.title).toContain('設定選單');
   });
 
   it('returns a visible panel for admins', async () => {

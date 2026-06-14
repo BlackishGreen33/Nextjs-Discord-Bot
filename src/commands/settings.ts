@@ -66,16 +66,14 @@ export const execute: executeCommand = async (interaction) => {
 
   const guildSettingsStore = getGuildSettingsStore();
 
-  if (!guildSettingsStore.isAvailable()) {
-    return toEphemeralMessage(defaultText.settings.errors.storageUnavailable);
-  }
-
   let storedSettings: Awaited<ReturnType<typeof guildSettingsStore.get>>;
 
   try {
-    storedSettings = await guildSettingsStore.get(interaction.guild_id);
+    storedSettings = guildSettingsStore.isAvailable()
+      ? await guildSettingsStore.get(interaction.guild_id)
+      : DEFAULT_GUILD_SETTINGS;
   } catch {
-    return toEphemeralMessage(defaultText.settings.errors.storageUnavailable);
+    storedSettings = DEFAULT_GUILD_SETTINGS;
   }
 
   const settings = await hydrateSettingsUpdatedBy(
