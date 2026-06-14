@@ -7,7 +7,10 @@ import {
 
 describe('preview message helpers', () => {
   it('builds a stable reply nonce from the source message id', () => {
-    expect(buildPreviewReplyNonce('1234567890')).toBe('preview:1234567890');
+    expect(buildPreviewReplyNonce('1234567890')).toBe('pv:1234567890');
+    expect(
+      buildPreviewReplyNonce('1515729788801650789').length
+    ).toBeLessThanOrEqual(25);
   });
 
   it('claims each source message once until the dedupe window expires', () => {

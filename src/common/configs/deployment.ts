@@ -111,15 +111,11 @@ export const isTranslateFeatureAvailable = () => {
     return false;
   }
 
-  if (!getTranslateApiBaseUrl()) {
-    return false;
-  }
-
   if (getMediaMode() === 'remote') {
     return hasRemoteMediaServiceConfig();
   }
 
-  return true;
+  return Boolean(getTranslateApiBaseUrl());
 };
 
 export const isGifFeatureAvailable = () => {

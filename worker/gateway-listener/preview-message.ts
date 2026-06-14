@@ -1,7 +1,7 @@
 const DEFAULT_PREVIEW_DEDUPE_TTL_MS = 5 * 60 * 1000;
 
 export const buildPreviewReplyNonce = (sourceMessageId: string) =>
-  `preview:${sourceMessageId}`;
+  `pv:${sourceMessageId.slice(-22)}`;
 
 export const createPreviewMessageDeduper = (
   ttlMs = DEFAULT_PREVIEW_DEDUPE_TTL_MS

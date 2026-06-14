@@ -91,21 +91,20 @@ describe('deployment config helpers', () => {
     expect(isTranslateFeatureAvailable()).toBe(false);
   });
 
-  it('does not expose translate in remote mode without translate provider URL', () => {
+  it('treats translate as available in remote mode when media service is configured', () => {
     process.env.MEDIA_MODE = 'remote';
     process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
     process.env.TRANSLATE_PROVIDER = 'libretranslate';
 
-    expect(isTranslateFeatureAvailable()).toBe(false);
+    expect(isTranslateFeatureAvailable()).toBe(true);
   });
 
-  it('treats translate as available in remote mode when provider is configured', () => {
+  it('does not expose translate in remote mode without media service config', () => {
     process.env.MEDIA_MODE = 'remote';
-    process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
     process.env.TRANSLATE_PROVIDER = 'libretranslate';
     process.env.TRANSLATE_API_BASE_URL = 'https://translate.example';
 
-    expect(isTranslateFeatureAvailable()).toBe(true);
+    expect(isTranslateFeatureAvailable()).toBe(false);
   });
 
   it('treats gif as available only when remote gif service is configured in embedded mode', () => {

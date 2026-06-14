@@ -501,11 +501,19 @@ describe('media-worker utils', () => {
     });
   });
 
-  it('does not call remote translation when translate provider URL is missing', async () => {
+  it('routes translation to the remote media service without local translate URL', async () => {
     mutableEnv.MEDIA_MODE = 'remote';
     mutableEnv.MEDIA_SERVICE_BASE_URL = 'https://media-service.example';
     mutableEnv.TRANSLATE_PROVIDER = 'libretranslate';
-    const fetchMock = vi.spyOn(global, 'fetch');
+    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          provider: 'remote-translate',
+          translatedText: '你好世界',
+        }),
+        { status: 200 }
+      )
+    );
 
     await expect(
       translateMediaText({
@@ -513,8 +521,16 @@ describe('media-worker utils', () => {
         targetLanguage: 'zh-TW',
         text: 'Hello world',
       })
-    ).rejects.toThrow('Translate service is not configured.');
-    expect(fetchMock).not.toHaveBeenCalled();
+    ).resolves.toEqual({
+      provider: 'remote-translate',
+      translatedText: '你好世界',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://media-service.example/v1/translate',
+      expect.objectContaining({
+        method: 'POST',
+      })
+    );
   });
 
   it('routes GIF conversion to the direct gif service in embedded mode', async () => {
