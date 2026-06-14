@@ -11,6 +11,7 @@ import {
   createMediaGif,
   getMediaPreview,
   type MediaGifResult,
+  type MediaPreview,
   translateMediaText,
 } from './media-worker';
 import { buildPreviewMessagePayload } from './preview-card';
@@ -78,6 +79,14 @@ type HandleMediaComponentInteractionOptions = {
   scheduleBackgroundTask?: (task: Promise<void>) => void;
 };
 
+type PreviewSourceMessage = {
+  content?: string;
+  embeds?: Array<{
+    description?: string;
+    url?: string;
+  }>;
+};
+
 const getRequesterId = (interaction: MessageComponentInteraction) =>
   interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
 
@@ -107,22 +116,45 @@ const hasManagePermission = (interaction: MessageComponentInteraction) => {
   );
 };
 
-const extractSourceUrlFromMessage = (
-  interaction: MessageComponentInteraction
-) => {
-  const embedUrl = interaction.message?.embeds?.[0]?.url;
+const extractSourceUrlFromMessage = (message?: PreviewSourceMessage) => {
+  const embedUrl = message?.embeds?.[0]?.url;
 
   if (typeof embedUrl === 'string' && embedUrl.length > 0) {
     return embedUrl;
   }
 
-  const content = interaction.message?.content;
+  const content = message?.content;
 
   if (typeof content === 'string' && content.length > 0) {
     return extractFirstSupportedMediaUrl(content);
   }
 
   return null;
+};
+
+const resolveSourceUrlFromInteraction = async (
+  interaction: MessageComponentInteraction,
+  sourceMessageId: string
+) => {
+  const sourceUrl = extractSourceUrlFromMessage(interaction.message);
+
+  if (sourceUrl) {
+    return sourceUrl;
+  }
+
+  if (!interaction.channel_id) {
+    return null;
+  }
+
+  try {
+    const response = await discord_api.get<PreviewSourceMessage>(
+      `/channels/${interaction.channel_id}/messages/${sourceMessageId}`
+    );
+
+    return extractSourceUrlFromMessage(response.data);
+  } catch {
+    return null;
+  }
 };
 
 const getGuildSettings = async (guildId: string | undefined) => {
@@ -136,7 +168,11 @@ const getGuildSettings = async (guildId: string | undefined) => {
     return DEFAULT_GUILD_SETTINGS;
   }
 
-  return store.get(guildId);
+  try {
+    return await store.get(guildId);
+  } catch {
+    return DEFAULT_GUILD_SETTINGS;
+  }
 };
 
 const createQueuedGifResult = (): MediaGifResult => ({
@@ -400,11 +436,6 @@ export const handleMediaComponentInteraction = async (
   }
 
   const requesterId = getRequesterId(interaction);
-  const sourceUrl = extractSourceUrlFromMessage(interaction);
-
-  if (!sourceUrl) {
-    return toEphemeralMessage(defaultText.preview.errors.previewSourceMissing);
-  }
 
   if (parsed.action === 'retract') {
     const settings = await getGuildSettings(interaction.guild_id);
@@ -432,9 +463,24 @@ export const handleMediaComponentInteraction = async (
     }
   }
 
+  const sourceUrl = await resolveSourceUrlFromInteraction(
+    interaction,
+    parsed.sourceMessageId
+  );
+
+  if (!sourceUrl) {
+    return toEphemeralMessage(defaultText.preview.errors.previewSourceMissing);
+  }
+
   const settings = await getGuildSettings(interaction.guild_id);
   const text = getTextForLanguage(settings.autoPreview.translationTarget);
-  const preview = await getMediaPreview(sourceUrl);
+  let preview: MediaPreview;
+
+  try {
+    preview = await getMediaPreview(sourceUrl);
+  } catch {
+    return toEphemeralMessage(text.preview.errors.previewUnavailable);
+  }
 
   if (parsed.action === 'translate') {
     if (!settings.autoPreview.features.translate) {

@@ -14,6 +14,10 @@ import {
 import { getMediaPreview } from '../../src/common/utils/media-worker';
 import { buildPreviewMessagePayload } from '../../src/common/utils/preview-card';
 import { buildPreviewFiles } from './preview-attachments.mjs';
+import {
+  buildPreviewReplyNonce,
+  createPreviewMessageDeduper,
+} from './preview-message';
 
 const token = process.env.DISCORD_GATEWAY_TOKEN ?? process.env.BOT_TOKEN;
 const port = Number.parseInt(process.env.PORT ?? '', 10);
@@ -62,6 +66,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
   ],
 });
+const previewMessageDeduper = createPreviewMessageDeduper();
 
 const gatewayState = {
   debugMessages: [] as string[],
@@ -233,6 +238,10 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
+  if (!previewMessageDeduper.claim(message.id)) {
+    return;
+  }
+
   try {
     const preview = await getMediaPreview(sourceUrl);
     const payload = buildPreviewMessagePayload(preview, settings, {
@@ -244,8 +253,19 @@ client.on('messageCreate', async (message) => {
     await message.reply({
       ...((files.length ?? 0) > 0 ? { files } : {}),
       ...payload,
+      enforceNonce: true,
       failIfNotExists: false,
+      nonce: buildPreviewReplyNonce(message.id),
     });
+
+    try {
+      await message.suppressEmbeds(true);
+    } catch (error) {
+      console.warn(
+        '[gateway-listener] failed to suppress source embeds',
+        error
+      );
+    }
   } catch (error) {
     console.error('[gateway-listener] failed to create preview card', error);
   }

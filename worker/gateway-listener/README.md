@@ -53,6 +53,8 @@ If storage is unavailable, the listener falls back to the default guild preview 
 
 When the preview provider returns direct image or video URLs, the listener re-uploads them as Discord attachments so the reply can render as native media instead of only an embed thumbnail. Large or unsupported media falls back to metadata-only embeds.
 
+After a preview card is posted, the listener also suppresses Discord's built-in embed on the user's source message. This requires `Manage Messages`.
+
 If `PORT` is present, the listener also exposes:
 
 - `/`
@@ -81,5 +83,5 @@ For operational details, see [docs/en/runbooks/render-gateway-listener.md](../..
 ## Permissions Checklist
 
 - enable **Message Content Intent** in Discord Developer Portal
-- invite the bot with `Read Messages/View Channels`, `Send Messages`, `Embed Links`, and `Attach Files`
+- invite the bot with `Read Messages/View Channels`, `Send Messages`, `Embed Links`, `Attach Files`, and `Manage Messages`
 - keep this process running on an always-on host

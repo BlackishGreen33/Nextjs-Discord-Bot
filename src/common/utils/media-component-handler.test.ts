@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const discordDeleteMock = vi.fn();
+const discordGetMock = vi.fn();
 const discordPostMock = vi.fn();
 const getMediaPreviewMock = vi.fn();
 const translateMediaTextMock = vi.fn();
@@ -37,6 +38,7 @@ vi.mock('@/common/stores', () => ({
 vi.mock('./discord-api', () => ({
   discord_api: {
     delete: (...args: unknown[]) => discordDeleteMock(...args),
+    get: (...args: unknown[]) => discordGetMock(...args),
     post: (...args: unknown[]) => discordPostMock(...args),
   },
 }));
@@ -159,6 +161,53 @@ describe('media-component-handler', () => {
     ).toContain('翻譯 (zh-TW)');
   });
 
+  it('loads the source message when the preview card has no source URL', async () => {
+    translateMediaTextMock.mockResolvedValue({
+      provider: 'translate-api',
+      translatedText: '你好世界',
+    });
+    discordGetMock.mockResolvedValue({
+      data: {
+        content: 'original post https://x.com/user/status/1',
+      },
+    });
+
+    const response = await handleMediaComponentInteraction({
+      ...buildInteraction(
+        buildPreviewActionCustomId('translate', 'user-1', 'src-1')
+      ),
+      message: {
+        embeds: [],
+        id: 'bot-message-1',
+      },
+    });
+
+    expect(discordGetMock).toHaveBeenCalledWith(
+      '/channels/channel-1/messages/src-1'
+    );
+    expect(getMediaPreviewMock).toHaveBeenCalledWith(
+      'https://x.com/user/status/1'
+    );
+    expect(response.type).toBe(7);
+  });
+
+  it('returns a preview error when the media provider fails', async () => {
+    getMediaPreviewMock.mockRejectedValue(new Error('media down'));
+
+    const response = (await handleMediaComponentInteraction(
+      buildInteraction(
+        buildPreviewActionCustomId('translate', 'user-1', 'src-1')
+      )
+    )) as {
+      data: { content: string; flags: number };
+      type: number;
+    };
+
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBe(64);
+    expect(response.data.content).toBe('目前無法取得這則貼文的預覽。');
+  });
+
   it('queues a background GIF follow-up when conversion is slow', async () => {
     vi.useFakeTimers();
     createMediaGifMock.mockReturnValue(new Promise(() => {}));
@@ -188,6 +237,26 @@ describe('media-component-handler', () => {
       buildInteraction(buildPreviewActionCustomId('retract', 'user-1', 'src-1'))
     );
 
+    expect(discordDeleteMock).toHaveBeenCalledWith(
+      '/channels/channel-1/messages/bot-message-1'
+    );
+    expect(response.type).toBe(6);
+  });
+
+  it('deletes the preview message without requiring a source URL', async () => {
+    discordDeleteMock.mockResolvedValue({});
+
+    const response = await handleMediaComponentInteraction({
+      ...buildInteraction(
+        buildPreviewActionCustomId('retract', 'user-1', 'src-1')
+      ),
+      message: {
+        embeds: [],
+        id: 'bot-message-1',
+      },
+    });
+
+    expect(discordGetMock).not.toHaveBeenCalled();
     expect(discordDeleteMock).toHaveBeenCalledWith(
       '/channels/channel-1/messages/bot-message-1'
     );
