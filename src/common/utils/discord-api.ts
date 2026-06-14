@@ -103,6 +103,11 @@ export const discord_api = {
       body: JSON.stringify(body),
       method: 'POST',
     }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, {
+      body: JSON.stringify(body),
+      method: 'PATCH',
+    }),
   put: <T>(path: string, body: unknown) =>
     request<T>(path, {
       body: JSON.stringify(body),

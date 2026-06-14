@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const discordDeleteMock = vi.fn();
 const discordGetMock = vi.fn();
+const discordPatchMock = vi.fn();
 const discordPostMock = vi.fn();
+const fetchMock = vi.fn();
 const getMediaPreviewMock = vi.fn();
 const translateMediaTextMock = vi.fn();
 const createMediaGifMock = vi.fn();
@@ -39,6 +41,7 @@ vi.mock('./discord-api', () => ({
   discord_api: {
     delete: (...args: unknown[]) => discordDeleteMock(...args),
     get: (...args: unknown[]) => discordGetMock(...args),
+    patch: (...args: unknown[]) => discordPatchMock(...args),
     post: (...args: unknown[]) => discordPostMock(...args),
   },
 }));
@@ -84,6 +87,7 @@ const configureTranslateProvider = () => {
 
 const buildInteraction = (customId: string) =>
   ({
+    application_id: 'app-1',
     channel_id: 'channel-1',
     data: {
       component_type: 2,
@@ -107,12 +111,15 @@ const buildInteraction = (customId: string) =>
       ],
       id: 'bot-message-1',
     },
+    token: 'interaction-token',
   }) as Parameters<typeof handleMediaComponentInteraction>[0];
 
 describe('media-component-handler', () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    fetchMock.mockResolvedValue(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
     guildSettingsStoreMock.isAvailable.mockReturnValue(true);
     guildSettingsStoreMock.get.mockResolvedValue(baseSettings);
     guildSettingsStoreMock.set.mockImplementation(
@@ -150,6 +157,7 @@ describe('media-component-handler', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     for (const key of ENV_KEYS) {
       if (originalEnv[key] === undefined) {
         delete process.env[key];
@@ -160,24 +168,37 @@ describe('media-component-handler', () => {
     }
   });
 
-  it('updates the preview message when translation succeeds', async () => {
+  it('queues a preview message update when translation succeeds', async () => {
     configureTranslateProvider();
     translateMediaTextMock.mockResolvedValue({
       provider: 'translate-api',
       translatedText: '你好世界',
     });
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
+    });
 
     const response = await handleMediaComponentInteraction(
       buildInteraction(
         buildPreviewActionCustomId('translate', 'user-1', 'src-1')
-      )
+      ),
+      { scheduleBackgroundTask }
     );
 
-    expect(response.type).toBe(7);
-    expect(
-      (response as { data: { embeds: Array<{ description?: string }> } }).data
-        .embeds[0]?.description
-    ).toContain('翻譯 (zh-TW)');
+    expect(response.type).toBe(6);
+    expect(scheduleBackgroundTask).toHaveBeenCalledTimes(1);
+    await backgroundTasks[0];
+    expect(discordPatchMock).toHaveBeenCalledWith(
+      '/channels/channel-1/messages/bot-message-1',
+      expect.objectContaining({
+        embeds: expect.any(Array),
+      })
+    );
+    const payload = discordPatchMock.mock.calls[0]?.[1] as {
+      embeds: Array<{ description?: string }>;
+    };
+    expect(payload.embeds[0]?.description).toContain('翻譯 (zh-TW)');
   });
 
   it('loads the source message when the preview card has no source URL', async () => {
@@ -186,47 +207,65 @@ describe('media-component-handler', () => {
       provider: 'translate-api',
       translatedText: '你好世界',
     });
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
+    });
     discordGetMock.mockResolvedValue({
       data: {
         content: 'original post https://x.com/user/status/1',
       },
     });
 
-    const response = await handleMediaComponentInteraction({
-      ...buildInteraction(
-        buildPreviewActionCustomId('translate', 'user-1', 'src-1')
-      ),
-      message: {
-        embeds: [],
-        id: 'bot-message-1',
+    const response = await handleMediaComponentInteraction(
+      {
+        ...buildInteraction(
+          buildPreviewActionCustomId('translate', 'user-1', 'src-1')
+        ),
+        message: {
+          embeds: [],
+          id: 'bot-message-1',
+        },
       },
-    });
+      { scheduleBackgroundTask }
+    );
 
+    expect(response.type).toBe(6);
+    await backgroundTasks[0];
     expect(discordGetMock).toHaveBeenCalledWith(
       '/channels/channel-1/messages/src-1'
     );
     expect(getMediaPreviewMock).toHaveBeenCalledWith(
       'https://x.com/user/status/1'
     );
-    expect(response.type).toBe(7);
+    expect(discordPatchMock).toHaveBeenCalled();
   });
 
   it('returns a preview error when the media provider fails', async () => {
     configureTranslateProvider();
     getMediaPreviewMock.mockRejectedValue(new Error('media down'));
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
+    });
 
     const response = (await handleMediaComponentInteraction(
       buildInteraction(
         buildPreviewActionCustomId('translate', 'user-1', 'src-1')
-      )
+      ),
+      { scheduleBackgroundTask }
     )) as {
-      data: { content: string; flags: number };
       type: number;
     };
 
-    expect(response.type).toBe(4);
-    expect(response.data.flags).toBe(64);
-    expect(response.data.content).toBe('目前無法取得這則貼文的預覽。');
+    expect(response.type).toBe(6);
+    await backgroundTasks[0];
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://discord.com/api/webhooks/app-1/interaction-token',
+      expect.objectContaining({
+        body: expect.stringContaining('目前無法取得這則貼文的預覽。'),
+      })
+    );
   });
 
   it('returns a localized translate error when the remote worker fails', async () => {
@@ -234,35 +273,54 @@ describe('media-component-handler', () => {
     translateMediaTextMock.mockRejectedValue(
       new Error('Media worker request failed with status 503')
     );
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
+    });
 
     const response = (await handleMediaComponentInteraction(
       buildInteraction(
         buildPreviewActionCustomId('translate', 'user-1', 'src-1')
-      )
+      ),
+      { scheduleBackgroundTask }
     )) as {
-      data: { content: string; flags: number };
       type: number;
     };
 
-    expect(response.type).toBe(4);
-    expect(response.data.flags).toBe(64);
-    expect(response.data.content).toBe('翻譯這則預覽失敗。');
+    expect(response.type).toBe(6);
+    await backgroundTasks[0];
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://discord.com/api/webhooks/app-1/interaction-token',
+      expect.objectContaining({
+        body: expect.stringContaining('翻譯這則預覽失敗。'),
+      })
+    );
   });
 
   it('returns translate disabled when the provider is not configured', async () => {
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
+    });
+
     const response = (await handleMediaComponentInteraction(
       buildInteraction(
         buildPreviewActionCustomId('translate', 'user-1', 'src-1')
-      )
+      ),
+      { scheduleBackgroundTask }
     )) as {
-      data: { content: string; flags: number };
       type: number;
     };
 
+    expect(response.type).toBe(6);
+    await backgroundTasks[0];
     expect(translateMediaTextMock).not.toHaveBeenCalled();
-    expect(response.type).toBe(4);
-    expect(response.data.flags).toBe(64);
-    expect(response.data.content).toBe('此伺服器已停用翻譯功能。');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://discord.com/api/webhooks/app-1/interaction-token',
+      expect.objectContaining({
+        body: expect.stringContaining('此伺服器已停用翻譯功能。'),
+      })
+    );
   });
 
   it('queues a background GIF follow-up when conversion is slow', async () => {
@@ -289,35 +347,52 @@ describe('media-component-handler', () => {
 
   it('deletes the preview message when retract is authorized', async () => {
     discordDeleteMock.mockResolvedValue({});
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
+    });
 
     const response = await handleMediaComponentInteraction(
-      buildInteraction(buildPreviewActionCustomId('retract', 'user-1', 'src-1'))
+      buildInteraction(
+        buildPreviewActionCustomId('retract', 'user-1', 'src-1')
+      ),
+      { scheduleBackgroundTask }
     );
 
+    expect(response.type).toBe(6);
+    expect(scheduleBackgroundTask).toHaveBeenCalledTimes(1);
+    await backgroundTasks[0];
     expect(discordDeleteMock).toHaveBeenCalledWith(
       '/channels/channel-1/messages/bot-message-1'
     );
-    expect(response.type).toBe(6);
   });
 
   it('deletes the preview message without requiring a source URL', async () => {
     discordDeleteMock.mockResolvedValue({});
-
-    const response = await handleMediaComponentInteraction({
-      ...buildInteraction(
-        buildPreviewActionCustomId('retract', 'user-1', 'src-1')
-      ),
-      message: {
-        embeds: [],
-        id: 'bot-message-1',
-      },
+    const backgroundTasks: Promise<void>[] = [];
+    const scheduleBackgroundTask = vi.fn((task: Promise<void>) => {
+      backgroundTasks.push(task);
     });
 
+    const response = await handleMediaComponentInteraction(
+      {
+        ...buildInteraction(
+          buildPreviewActionCustomId('retract', 'user-1', 'src-1')
+        ),
+        message: {
+          embeds: [],
+          id: 'bot-message-1',
+        },
+      },
+      { scheduleBackgroundTask }
+    );
+
+    expect(response.type).toBe(6);
+    await backgroundTasks[0];
     expect(discordGetMock).not.toHaveBeenCalled();
     expect(discordDeleteMock).toHaveBeenCalledWith(
       '/channels/channel-1/messages/bot-message-1'
     );
-    expect(response.type).toBe(6);
   });
 
   it('toggles guild settings from the settings panel', async () => {

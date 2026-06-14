@@ -32,6 +32,7 @@ const UPDATE_MESSAGE = 7;
 const MANAGE_GUILD_PERMISSION = BigInt(1) << BigInt(5);
 const ADMINISTRATOR_PERMISSION = BigInt(1) << BigInt(3);
 const GIF_INTERACTION_TIMEOUT_MS = 2800;
+const DISCORD_API_BASE_URL = 'https://discord.com/api';
 
 const toEphemeralMessage = (content: string): APIInteractionResponse => ({
   data: {
@@ -45,6 +46,7 @@ const getTextForLanguage = (language?: string | null) =>
   getUiText(language ?? 'zh-TW');
 
 type MessageComponentInteraction = {
+  application_id?: string;
   channel_id?: string;
   data: {
     component_type?: number;
@@ -69,6 +71,7 @@ type MessageComponentInteraction = {
     }>;
     id?: string;
   };
+  token?: string;
   user?: {
     global_name?: string | null;
     id?: string;
@@ -184,6 +187,33 @@ const createQueuedGifResult = (): MediaGifResult => ({
   status: 'queued',
 });
 
+const sendInteractionFollowUp = async (
+  interaction: MessageComponentInteraction,
+  content: string
+) => {
+  if (!interaction.application_id || !interaction.token) {
+    return;
+  }
+
+  try {
+    await fetch(
+      `${DISCORD_API_BASE_URL}/webhooks/${interaction.application_id}/${interaction.token}`,
+      {
+        body: JSON.stringify({
+          content,
+          flags: EPHEMERAL_FLAG,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }
+    );
+  } catch {
+    // Best effort follow-up only.
+  }
+};
+
 const withInteractionTimeout = async (
   promise: Promise<MediaGifResult>
 ): Promise<{ result: MediaGifResult; timedOut: boolean }> => {
@@ -252,6 +282,114 @@ const queueGifFollowUp = (
     .catch(() => {
       // Best effort follow-up only.
     });
+
+const queueTranslationUpdate = (
+  interaction: MessageComponentInteraction,
+  parsed: NonNullable<ReturnType<typeof parsePreviewActionCustomId>>,
+  params: {
+    messageId: string;
+  }
+) =>
+  (async () => {
+    const sourceUrl = await resolveSourceUrlFromInteraction(
+      interaction,
+      parsed.sourceMessageId
+    );
+
+    if (!sourceUrl) {
+      await sendInteractionFollowUp(
+        interaction,
+        getTextForLanguage('zh-TW').preview.errors.previewSourceMissing
+      );
+      return;
+    }
+
+    const settings = await getGuildSettings(interaction.guild_id);
+    const text = getTextForLanguage(settings.autoPreview.translationTarget);
+
+    if (
+      !settings.autoPreview.features.translate ||
+      !isTranslateFeatureAvailable()
+    ) {
+      await sendInteractionFollowUp(
+        interaction,
+        text.preview.errors.translateDisabled
+      );
+      return;
+    }
+
+    let preview: MediaPreview;
+
+    try {
+      preview = await getMediaPreview(sourceUrl);
+    } catch {
+      await sendInteractionFollowUp(
+        interaction,
+        text.preview.errors.previewUnavailable
+      );
+      return;
+    }
+
+    if (!preview.text) {
+      await sendInteractionFollowUp(
+        interaction,
+        text.preview.errors.translateNoText
+      );
+      return;
+    }
+
+    try {
+      const translation = await translateMediaText({
+        sourceUrl,
+        targetLanguage: settings.autoPreview.translationTarget,
+        text: preview.text,
+      });
+      const panel = buildPreviewMessagePayload(
+        {
+          ...preview,
+          translatedText: translation.translatedText,
+        },
+        settings,
+        {
+          ownerUserId: parsed.ownerUserId,
+          sourceMessageId: parsed.sourceMessageId,
+        }
+      );
+
+      await discord_api.patch(
+        `/channels/${interaction.channel_id}/messages/${params.messageId}`,
+        panel
+      );
+    } catch (error) {
+      const maybeError = error as { message?: string };
+      const message = maybeError.message;
+
+      await sendInteractionFollowUp(
+        interaction,
+        message?.startsWith('Media worker request failed')
+          ? text.preview.errors.translateFailed
+          : (message ?? text.preview.errors.translateFailed)
+      );
+    }
+  })().catch(() => {
+    // Best effort background update only.
+  });
+
+const queueRetractMessage = (
+  interaction: MessageComponentInteraction,
+  params: {
+    messageId: string;
+  }
+) =>
+  discord_api
+    .delete(`/channels/${interaction.channel_id}/messages/${params.messageId}`)
+    .catch(async () => {
+      await sendInteractionFollowUp(
+        interaction,
+        getTextForLanguage('zh-TW').preview.errors.retractFailed
+      );
+    })
+    .then(() => undefined);
 
 const applySettingsToggle = (
   settings: typeof DEFAULT_GUILD_SETTINGS.autoPreview,
@@ -454,29 +592,52 @@ export const handleMediaComponentInteraction = async (
   const requesterId = getRequesterId(interaction);
 
   if (parsed.action === 'retract') {
-    const settings = await getGuildSettings(interaction.guild_id);
-    const text = getTextForLanguage(settings.autoPreview.translationTarget);
     const allowed =
       requesterId === parsed.ownerUserId || hasManagePermission(interaction);
 
     if (!allowed) {
-      return toEphemeralMessage(text.preview.errors.onlyOwnerCanRetract);
+      return toEphemeralMessage(defaultText.preview.errors.onlyOwnerCanRetract);
     }
 
     if (!interaction.channel_id || !interaction.message?.id) {
-      return toEphemeralMessage(text.preview.errors.retractNotFound);
+      return toEphemeralMessage(defaultText.preview.errors.retractNotFound);
     }
 
-    try {
-      await discord_api.delete(
-        `/channels/${interaction.channel_id}/messages/${interaction.message.id}`
-      );
-      return {
-        type: DEFERRED_UPDATE_MESSAGE,
-      };
-    } catch {
-      return toEphemeralMessage(text.preview.errors.retractFailed);
+    const backgroundTask = queueRetractMessage(interaction, {
+      messageId: interaction.message.id,
+    });
+
+    if (options?.scheduleBackgroundTask) {
+      options.scheduleBackgroundTask(backgroundTask);
+    } else {
+      void backgroundTask;
     }
+
+    return {
+      type: DEFERRED_UPDATE_MESSAGE,
+    };
+  }
+
+  if (parsed.action === 'translate') {
+    if (!interaction.channel_id || !interaction.message?.id) {
+      return toEphemeralMessage(
+        defaultText.preview.errors.previewSourceMissing
+      );
+    }
+
+    const backgroundTask = queueTranslationUpdate(interaction, parsed, {
+      messageId: interaction.message.id,
+    });
+
+    if (options?.scheduleBackgroundTask) {
+      options.scheduleBackgroundTask(backgroundTask);
+    } else {
+      void backgroundTask;
+    }
+
+    return {
+      type: DEFERRED_UPDATE_MESSAGE,
+    };
   }
 
   const sourceUrl = await resolveSourceUrlFromInteraction(
@@ -496,52 +657,6 @@ export const handleMediaComponentInteraction = async (
     preview = await getMediaPreview(sourceUrl);
   } catch {
     return toEphemeralMessage(text.preview.errors.previewUnavailable);
-  }
-
-  if (parsed.action === 'translate') {
-    if (
-      !settings.autoPreview.features.translate ||
-      !isTranslateFeatureAvailable()
-    ) {
-      return toEphemeralMessage(text.preview.errors.translateDisabled);
-    }
-
-    if (!preview.text) {
-      return toEphemeralMessage(text.preview.errors.translateNoText);
-    }
-
-    try {
-      const translation = await translateMediaText({
-        sourceUrl,
-        targetLanguage: settings.autoPreview.translationTarget,
-        text: preview.text,
-      });
-      const panel = buildPreviewMessagePayload(
-        {
-          ...preview,
-          translatedText: translation.translatedText,
-        },
-        settings,
-        {
-          ownerUserId: parsed.ownerUserId,
-          sourceMessageId: parsed.sourceMessageId,
-        }
-      );
-
-      return {
-        data: panel,
-        type: UPDATE_MESSAGE,
-      };
-    } catch (error) {
-      const maybeError = error as { message?: string };
-      const message = maybeError.message;
-
-      return toEphemeralMessage(
-        message?.startsWith('Media worker request failed')
-          ? text.preview.errors.translateFailed
-          : (message ?? text.preview.errors.translateFailed)
-      );
-    }
   }
 
   if (!settings.autoPreview.features.gif) {
