@@ -629,6 +629,38 @@ describe('cloudflare media proxy', () => {
     });
   });
 
+  it('translates through Workers AI when configured', async () => {
+    const aiRun = vi.fn().mockResolvedValue({
+      translated_text: '您好世界',
+    });
+
+    const response = await worker.fetch(
+      createRequest('/v1/translate', {
+        sourceUrl: 'https://x.com/alice/status/123',
+        targetLanguage: 'zh-TW',
+        text: 'Hello world',
+      }),
+      {
+        ...env,
+        AI: {
+          run: aiRun,
+        },
+        TRANSLATE_PROVIDER: 'workers-ai',
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      provider: 'workers-ai',
+      translatedText: '您好世界',
+    });
+    expect(aiRun).toHaveBeenCalledWith('@cf/meta/m2m100-1.2b', {
+      source_lang: 'english',
+      target_lang: 'chinese',
+      text: 'Hello world',
+    });
+  });
+
   it('proxies GIF requests to the configured GIF service', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(

@@ -283,7 +283,7 @@ Start from [`.env.example`](./.env.example).
 | `MEDIA_SERVICE_TOKEN`    | `web`, `listener`          | Optional bearer token for the remote media service      |
 | `MEDIA_TIMEOUT_MS`       | `web`, `listener`          | Timeout for remote media requests                       |
 | `MEDIA_ALLOWED_DOMAINS`  | `web`, `listener`, `media` | Comma-separated allowlist for supported preview domains |
-| `TRANSLATE_PROVIDER`     | `web`, `listener`          | `disabled` (default) or `libretranslate`                |
+| `TRANSLATE_PROVIDER`     | `web`, `listener`, `media` | `disabled` (default), `libretranslate`, or `workers-ai` |
 | `TRANSLATE_API_BASE_URL` | `web`, `listener`, `media` | Required for embedded LibreTranslate mode               |
 | `TRANSLATE_API_KEY`      | `web`, `listener`, `media` | Optional translate provider key                         |
 

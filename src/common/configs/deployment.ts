@@ -1,7 +1,7 @@
 export type GifMode = 'disabled' | 'remote';
 export type MediaMode = 'disabled' | 'embedded' | 'remote';
 export type StorageDriver = 'prisma' | 'redis';
-export type TranslateProvider = 'disabled' | 'libretranslate';
+export type TranslateProvider = 'disabled' | 'libretranslate' | 'workers-ai';
 
 const getTrimmedEnv = (name: string) => process.env[name]?.trim() ?? '';
 
@@ -101,6 +101,7 @@ export const getTranslateProvider = (): TranslateProvider =>
   getValidEnvValue('TRANSLATE_PROVIDER', [
     'disabled',
     'libretranslate',
+    'workers-ai',
   ] as const) ?? 'disabled';
 
 export const getTranslateApiBaseUrl = () =>

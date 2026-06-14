@@ -94,14 +94,14 @@ describe('deployment config helpers', () => {
   it('treats translate as available in remote mode when media service is configured', () => {
     process.env.MEDIA_MODE = 'remote';
     process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
-    process.env.TRANSLATE_PROVIDER = 'libretranslate';
+    process.env.TRANSLATE_PROVIDER = 'workers-ai';
 
     expect(isTranslateFeatureAvailable()).toBe(true);
   });
 
   it('does not expose translate in remote mode without media service config', () => {
     process.env.MEDIA_MODE = 'remote';
-    process.env.TRANSLATE_PROVIDER = 'libretranslate';
+    process.env.TRANSLATE_PROVIDER = 'workers-ai';
     process.env.TRANSLATE_API_BASE_URL = 'https://translate.example';
 
     expect(isTranslateFeatureAvailable()).toBe(false);

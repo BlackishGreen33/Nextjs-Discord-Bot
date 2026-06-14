@@ -1,4 +1,14 @@
 type Env = {
+  AI?: {
+    run: (
+      model: string,
+      input: {
+        source_lang?: string;
+        target_lang: string;
+        text: string;
+      }
+    ) => Promise<unknown>;
+  };
   BLUESKY_FALLBACK_BASE_URL?: string;
   BLUESKY_PUBLIC_BASE_URL?: string;
   FXEMBED_FALLBACK_BASE_URL?: string;
@@ -10,6 +20,7 @@ type Env = {
   PHIXIV_PUBLIC_BASE_URL?: string;
   TRANSLATE_API_BASE_URL?: string;
   TRANSLATE_API_KEY?: string;
+  TRANSLATE_PROVIDER?: string;
   TWITTER_JINA_BASE_URL?: string;
   TWITTER_OEMBED_BASE_URL?: string;
   TWITTER_SYNDICATION_BASE_URL?: string;
@@ -81,6 +92,7 @@ const SENSITIVE_LABEL_HINTS = [
   'sexual',
   'suggestive',
 ];
+const WORKERS_AI_TRANSLATE_MODEL = '@cf/meta/m2m100-1.2b';
 
 const jsonResponse = (data: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(data), {
@@ -1025,20 +1037,60 @@ const fetchPreview = async (
   throw new Error('Unsupported platform.');
 };
 
+const getWorkersAiTargetLanguage = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized.startsWith('zh')) {
+    return 'chinese';
+  }
+
+  if (normalized.startsWith('ja')) {
+    return 'japanese';
+  }
+
+  if (normalized.startsWith('ko')) {
+    return 'korean';
+  }
+
+  return 'english';
+};
+
+const handleWorkersAiTranslate = async (
+  env: Env,
+  payload: {
+    targetLanguage: string;
+    text: string;
+  }
+) => {
+  if (!env.AI) {
+    return errorResponse(503, 'Workers AI binding is not configured.');
+  }
+
+  const result = (await env.AI.run(WORKERS_AI_TRANSLATE_MODEL, {
+    source_lang: 'english',
+    target_lang: getWorkersAiTargetLanguage(payload.targetLanguage),
+    text: payload.text,
+  })) as JsonRecord;
+  const translatedText =
+    asStringOrNull(result.translated_text) ??
+    asStringOrNull(result.translatedText);
+
+  if (!translatedText) {
+    return errorResponse(502, 'Workers AI did not return translated text.');
+  }
+
+  return jsonResponse({
+    provider: 'workers-ai',
+    translatedText,
+  });
+};
+
 const handleTranslate = async (env: Env, request: Request) => {
   const payload = (await request.json()) as {
     sourceUrl?: unknown;
     targetLanguage?: unknown;
     text?: unknown;
   };
-  const baseUrl = env.TRANSLATE_API_BASE_URL?.trim();
-
-  if (!baseUrl) {
-    return errorResponse(
-      503,
-      'Translate service is not configured. Set TRANSLATE_API_BASE_URL.'
-    );
-  }
 
   if (typeof payload.text !== 'string' || payload.text.trim().length === 0) {
     return errorResponse(400, 'text is required');
@@ -1049,6 +1101,22 @@ const handleTranslate = async (env: Env, request: Request) => {
     payload.targetLanguage.trim().length === 0
   ) {
     return errorResponse(400, 'targetLanguage is required');
+  }
+
+  if (env.TRANSLATE_PROVIDER?.trim() === 'workers-ai') {
+    return handleWorkersAiTranslate(env, {
+      targetLanguage: payload.targetLanguage,
+      text: payload.text,
+    });
+  }
+
+  const baseUrl = env.TRANSLATE_API_BASE_URL?.trim();
+
+  if (!baseUrl) {
+    return errorResponse(
+      503,
+      'Translate service is not configured. Set TRANSLATE_API_BASE_URL.'
+    );
   }
 
   const translateResponse = await fetch(

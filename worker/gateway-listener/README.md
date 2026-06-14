@@ -32,7 +32,7 @@ Also set one storage backend:
 - `MEDIA_MODE=embedded|remote|disabled`
 - `MEDIA_SERVICE_BASE_URL`
 - `MEDIA_SERVICE_TOKEN`
-- `TRANSLATE_PROVIDER=disabled|libretranslate`
+- `TRANSLATE_PROVIDER=disabled|libretranslate|workers-ai`
 - `TRANSLATE_API_BASE_URL`
 - `TRANSLATE_API_KEY`
 - `GIF_MODE=disabled|remote`

@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2026-03-19"
 workers_dev = true
 
+[ai]
+binding = "AI"
+
 # Set with: wrangler secret put WORKER_AUTH_TOKEN
 # Optional: wrangler secret put GIF_API_TOKEN
 # Optional: wrangler secret put TRANSLATE_API_KEY
@@ -12,6 +15,7 @@ MEDIA_ALLOWED_DOMAINS = "x.com,twitter.com,pixiv.net,www.pixiv.net,bsky.app"
 FXEMBED_PUBLIC_BASE_URL = "https://api.fxtwitter.com"
 PHIXIV_PUBLIC_BASE_URL = "https://phixiv.net"
 BLUESKY_PUBLIC_BASE_URL = "https://public.api.bsky.app/xrpc"
+TRANSLATE_PROVIDER = "workers-ai"
 # Optional alternates:
 # FXEMBED_FALLBACK_BASE_URL = "https://your-fxembed.example"
 # PHIXIV_FALLBACK_BASE_URL = "https://your-phixiv.example"
