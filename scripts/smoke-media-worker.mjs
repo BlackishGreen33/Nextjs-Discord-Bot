@@ -131,6 +131,14 @@ const summarizePayload = (payload) => {
     .join(' | ');
 };
 
+const hasRealTwitterPreview = (payload) =>
+  payload?.platform === 'Twitter' &&
+  (typeof payload.text === 'string' ||
+    typeof payload.authorName === 'string' ||
+    typeof payload.authorHandle === 'string' ||
+    (Array.isArray(payload.media) && payload.media.length > 0)) &&
+  payload.title !== 'Twitter post';
+
 const checks = [];
 const addCheck = (name, pass, detail) => {
   checks.push({ detail, name, pass });
@@ -145,7 +153,7 @@ const run = async () => {
   addCheck(
     'twitter preview returns 200',
     twitterPreview.status === 200 &&
-      twitterPreview.payload?.platform === 'Twitter',
+      hasRealTwitterPreview(twitterPreview.payload),
     `http=${twitterPreview.status} ${twitterPreview.elapsedMs}ms ${summarizePayload(twitterPreview.payload)}`
   );
 

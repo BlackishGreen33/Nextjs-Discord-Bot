@@ -21,15 +21,34 @@ type EmbeddedMediaEnv = NodeJS.ProcessEnv & {
   PHIXIV_PUBLIC_BASE_URL?: string;
   TRANSLATE_API_BASE_URL?: string;
   TRANSLATE_API_KEY?: string;
+  TWITTER_JINA_BASE_URL?: string;
+  TWITTER_OEMBED_BASE_URL?: string;
+  TWITTER_SYNDICATION_BASE_URL?: string;
+  TWITTER_SYNDICATION_JINA_BASE_URL?: string;
 };
 
 const DEFAULT_BLUESKY_PUBLIC_BASE_URL = 'https://public.api.bsky.app/xrpc';
 const DEFAULT_FXEMBED_PUBLIC_BASE_URL = 'https://api.fxtwitter.com';
 const DEFAULT_PHIXIV_PUBLIC_BASE_URL = 'https://phixiv.net';
+const DEFAULT_TWITTER_JINA_BASE_URL =
+  'https://r.jina.ai/http://api.fxtwitter.com';
+const DEFAULT_TWITTER_OEMBED_BASE_URL = 'https://publish.twitter.com/oembed';
+const DEFAULT_TWITTER_SYNDICATION_BASE_URL =
+  'https://cdn.syndication.twimg.com/tweet-result';
+const DEFAULT_TWITTER_SYNDICATION_JINA_BASE_URL =
+  'https://r.jina.ai/http://cdn.syndication.twimg.com/tweet-result';
 const DEFAULT_VXTWITTER_PUBLIC_BASE_URL = 'https://api.vxtwitter.com';
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
 };
+const TWITTER_PROVIDER_FETCH_INIT = {
+  headers: {
+    Accept: 'application/json, text/plain, */*',
+    Referer: 'https://platform.twitter.com/',
+    'User-Agent':
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  },
+} satisfies RequestInit;
 const SENSITIVE_LABEL_HINTS = [
   'graphic-media',
   'nudity',
@@ -81,6 +100,16 @@ const fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   return (await response.json()) as T;
 };
 
+const fetchText = async (url: string, init?: RequestInit): Promise<string> => {
+  const response = await fetch(url, init);
+
+  if (!response.ok) {
+    throw new Error(`Request failed (${response.status}) for ${url}`);
+  }
+
+  return response.text();
+};
+
 const tryBases = async <T>(
   bases: Array<string | undefined>,
   runner: (baseUrl: string) => Promise<T>
@@ -103,6 +132,18 @@ const tryBases = async <T>(
 
   throw lastError ?? new Error('No provider base URL was configured.');
 };
+
+const buildTwitterApiPaths = (statusId: string, handle: string | null) =>
+  Array.from(
+    new Set(
+      [
+        handle ? `/${handle}/status/${statusId}` : null,
+        `/status/${statusId}`,
+        `/i/status/${statusId}`,
+        `/Twitter/status/${statusId}`,
+      ].filter((value): value is string => Boolean(value))
+    )
+  );
 
 const parseTwitterHandle = (url: string) => {
   try {
@@ -196,28 +237,183 @@ const fetchTwitterApiPayload = async (
   statusId: string,
   handle: string | null
 ) => {
-  const paths = Array.from(
-    new Set(
-      [
-        handle ? `/${handle}/status/${statusId}` : null,
-        `/status/${statusId}`,
-        `/i/status/${statusId}`,
-        `/Twitter/status/${statusId}`,
-      ].filter((value): value is string => Boolean(value))
-    )
-  );
+  const paths = buildTwitterApiPaths(statusId, handle);
 
   let lastError: unknown = null;
 
   for (const path of paths) {
     try {
-      return await fetchJson<JsonRecord>(`${baseUrl}${path}`);
+      return await fetchJson<JsonRecord>(
+        `${baseUrl}${path}`,
+        TWITTER_PROVIDER_FETCH_INIT
+      );
     } catch (error) {
       lastError = error;
     }
   }
 
   throw lastError ?? new Error('Twitter preview provider did not return data.');
+};
+
+const parseJinaJsonPayload = (value: string) => {
+  const marker = 'Markdown Content:';
+  const markerIndex = value.indexOf(marker);
+  const content =
+    markerIndex === -1 ? value : value.slice(markerIndex + marker.length);
+  const startIndex = content.indexOf('{');
+  const endIndex = content.lastIndexOf('}');
+
+  if (startIndex === -1 || endIndex <= startIndex) {
+    throw new Error('Jina response did not include JSON content.');
+  }
+
+  return JSON.parse(content.slice(startIndex, endIndex + 1)) as JsonRecord;
+};
+
+const fetchTwitterJinaPayload = async (
+  baseUrl: string,
+  statusId: string,
+  handle: string | null
+) => {
+  const paths = buildTwitterApiPaths(statusId, handle);
+  let lastError: unknown = null;
+
+  for (const path of paths) {
+    try {
+      return parseJinaJsonPayload(
+        await fetchText(`${baseUrl}${path}`, TWITTER_PROVIDER_FETCH_INIT)
+      );
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error('Twitter Jina fallback did not return data.');
+};
+
+const mapTwitterSyndicationPayload = (payload: JsonRecord): JsonRecord => {
+  const user =
+    payload.user && typeof payload.user === 'object'
+      ? (payload.user as JsonRecord)
+      : null;
+  const mediaDetails = Array.isArray(payload.mediaDetails)
+    ? payload.mediaDetails
+    : [];
+  const photos = Array.isArray(payload.photos) ? payload.photos : [];
+  const entities =
+    payload.entities && typeof payload.entities === 'object'
+      ? (payload.entities as JsonRecord)
+      : null;
+  const entityUrls = Array.isArray(entities?.urls) ? entities.urls : [];
+  const mediaEntities = Array.isArray(entities?.media) ? entities.media : [];
+  const expandedUrlMap = [...entityUrls, ...mediaEntities].reduce<
+    Map<string, string>
+  >((accumulator, item) => {
+    const entity = item && typeof item === 'object' ? (item as JsonRecord) : {};
+    const shortUrl = asStringOrNull(entity.url);
+    const expandedUrl =
+      asStringOrNull(entity.expanded_url) ?? asStringOrNull(entity.expandedUrl);
+
+    if (shortUrl && expandedUrl) {
+      accumulator.set(shortUrl, expandedUrl);
+    }
+
+    return accumulator;
+  }, new Map());
+  const text = Array.from(expandedUrlMap.entries()).reduce(
+    (current, [shortUrl, expandedUrl]) =>
+      current.replaceAll(shortUrl, expandedUrl),
+    asStringOrNull(payload.text) ?? ''
+  );
+  const normalizedMedia = [...mediaDetails, ...photos];
+
+  const mapped = {
+    created_at: asStringOrNull(payload.created_at),
+    likes: asNumberOrNull(payload.favorite_count),
+    media_extended: normalizedMedia.map((item) => {
+      const media =
+        item && typeof item === 'object' ? (item as JsonRecord) : {};
+      const url =
+        asStringOrNull(media.media_url_https) ?? asStringOrNull(media.url);
+      return {
+        thumbnail_url: url,
+        type: asStringOrNull(media.type) ?? 'photo',
+        url,
+      };
+    }),
+    replies: asNumberOrNull(payload.conversation_count),
+    text: text || null,
+    tweetURL:
+      asStringOrNull(payload.url) ||
+      (asStringOrNull(user?.screen_name) && asStringOrNull(payload.id_str)
+        ? `https://x.com/${user?.screen_name as string}/status/${payload.id_str as string}`
+        : null),
+    user_name: asStringOrNull(user?.name),
+    user_profile_image_url: asStringOrNull(user?.profile_image_url_https),
+    user_screen_name: asStringOrNull(user?.screen_name),
+  };
+
+  if (
+    !mapped.text &&
+    !mapped.user_name &&
+    !mapped.user_screen_name &&
+    mapped.media_extended.length === 0
+  ) {
+    throw new Error('Twitter syndication response did not include tweet data.');
+  }
+
+  return mapped;
+};
+
+const fetchTwitterSyndicationPayload = async (
+  baseUrl: string,
+  statusId: string
+) =>
+  mapTwitterSyndicationPayload(
+    await fetchJson<JsonRecord>(
+      `${baseUrl}?id=${statusId}&token=a`,
+      TWITTER_PROVIDER_FETCH_INIT
+    )
+  );
+
+const fetchTwitterSyndicationJinaPayload = async (
+  baseUrl: string,
+  statusId: string
+) =>
+  mapTwitterSyndicationPayload(
+    parseJinaJsonPayload(
+      await fetchText(
+        `${baseUrl}?id=${statusId}&token=a`,
+        TWITTER_PROVIDER_FETCH_INIT
+      )
+    )
+  );
+
+const decodeHtmlEntities = (value: string) =>
+  value
+    .replace(/&#(\d+);/g, (_, code: string) =>
+      String.fromCharCode(Number(code))
+    )
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) =>
+      String.fromCharCode(Number.parseInt(code, 16))
+    )
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&mdash;/g, '-');
+
+const stripTwitterOEmbedHtml = (value: string) => {
+  const paragraph = value.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? value;
+
+  return decodeHtmlEntities(
+    paragraph
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s*pic\.twitter\.com\/\S+\s*$/i, '')
+      .trim()
+  );
 };
 
 const createMinimalTwitterPreview = (sourceUrl: string): MediaPreview => ({
@@ -237,6 +433,39 @@ const createMinimalTwitterPreview = (sourceUrl: string): MediaPreview => ({
   title: 'Twitter post',
   translatedText: null,
 });
+
+const fetchTwitterOEmbedPreview = async (
+  baseUrl: string,
+  sourceUrl: string
+): Promise<MediaPreview> => {
+  const payload = await fetchJson<JsonRecord>(
+    `${baseUrl}?url=${encodeURIComponent(sourceUrl)}&omit_script=1`,
+    TWITTER_PROVIDER_FETCH_INIT
+  );
+  const authorUrl = asStringOrNull(payload.author_url);
+  const authorHandle = authorUrl
+    ? parseTwitterHandle(`${authorUrl}/status/0`)
+    : null;
+  const text = stripTwitterOEmbedHtml(asStringOrNull(payload.html) ?? '');
+
+  return {
+    authorAvatarUrl: null,
+    authorHandle: authorHandle ? `@${authorHandle}` : null,
+    authorName: asStringOrNull(payload.author_name),
+    canonicalUrl: asStringOrNull(payload.url) ?? sourceUrl,
+    likes: null,
+    media: [],
+    platform: 'Twitter',
+    publishedAt: null,
+    replies: null,
+    reposts: null,
+    sensitive: false,
+    sourceUrl,
+    text: text || null,
+    title: buildTitleFromText(text) ?? 'Twitter post',
+    translatedText: null,
+  };
+};
 
 const fetchTwitterPreview = async (
   env: EmbeddedMediaEnv,
@@ -261,7 +490,41 @@ const fetchTwitterPreview = async (
       (baseUrl) => fetchTwitterApiPayload(baseUrl, statusId, handle)
     );
   } catch {
-    return createMinimalTwitterPreview(sourceUrl);
+    try {
+      payload = await tryBases<JsonRecord>(
+        [env.TWITTER_JINA_BASE_URL ?? DEFAULT_TWITTER_JINA_BASE_URL],
+        (baseUrl) => fetchTwitterJinaPayload(baseUrl, statusId, handle)
+      );
+    } catch {
+      try {
+        payload = await tryBases<JsonRecord>(
+          [
+            env.TWITTER_SYNDICATION_BASE_URL ??
+              DEFAULT_TWITTER_SYNDICATION_BASE_URL,
+          ],
+          (baseUrl) => fetchTwitterSyndicationPayload(baseUrl, statusId)
+        );
+      } catch {
+        try {
+          payload = await tryBases<JsonRecord>(
+            [
+              env.TWITTER_SYNDICATION_JINA_BASE_URL ??
+                DEFAULT_TWITTER_SYNDICATION_JINA_BASE_URL,
+            ],
+            (baseUrl) => fetchTwitterSyndicationJinaPayload(baseUrl, statusId)
+          );
+        } catch {
+          try {
+            return await tryBases<MediaPreview>(
+              [env.TWITTER_OEMBED_BASE_URL ?? DEFAULT_TWITTER_OEMBED_BASE_URL],
+              (baseUrl) => fetchTwitterOEmbedPreview(baseUrl, sourceUrl)
+            );
+          } catch {
+            return createMinimalTwitterPreview(sourceUrl);
+          }
+        }
+      }
+    }
   }
 
   const tweet =

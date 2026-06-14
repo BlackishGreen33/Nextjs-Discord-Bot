@@ -21,6 +21,10 @@ describe('media-worker utils', () => {
     'MEDIA_WORKER_TOKEN',
     'TRANSLATE_API_BASE_URL',
     'TRANSLATE_PROVIDER',
+    'TWITTER_JINA_BASE_URL',
+    'TWITTER_OEMBED_BASE_URL',
+    'TWITTER_SYNDICATION_BASE_URL',
+    'TWITTER_SYNDICATION_JINA_BASE_URL',
   ] as const;
   const originalEnv = Object.fromEntries(
     ENV_KEYS.map((key) => [key, process.env[key]])
@@ -193,12 +197,20 @@ describe('media-worker utils', () => {
     expect(global.fetch).toHaveBeenNthCalledWith(
       1,
       'https://primary.example/alice/status/123',
-      undefined
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'User-Agent': expect.any(String),
+        }),
+      })
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       5,
       'https://fallback.example/alice/status/123',
-      undefined
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'User-Agent': expect.any(String),
+        }),
+      })
     );
   });
 
@@ -218,6 +230,241 @@ describe('media-worker utils', () => {
         platform: 'Twitter',
         sourceUrl: 'https://x.com/alice/status/123',
         title: 'Twitter post',
+      })
+    );
+  });
+
+  it('uses the Jina Twitter fallback when direct providers fail', async () => {
+    mutableEnv.FXEMBED_PUBLIC_BASE_URL = 'https://primary.example';
+    mutableEnv.FXEMBED_FALLBACK_BASE_URL = 'https://fallback.example';
+    mutableEnv.TWITTER_JINA_BASE_URL = 'https://jina.example';
+    const fetchMock = vi.spyOn(global, 'fetch');
+    for (let index = 0; index < 12; index += 1) {
+      fetchMock.mockResolvedValueOnce(
+        new Response('forbidden', { status: 403 })
+      );
+    }
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        [
+          'Title:',
+          '',
+          'Markdown Content:',
+          JSON.stringify({
+            tweet: {
+              author: {
+                name: 'Alice',
+                screen_name: 'alice',
+              },
+              media: {
+                all: [
+                  {
+                    type: 'photo',
+                    url: 'https://cdn.example/photo.jpg',
+                  },
+                ],
+              },
+              text: 'Recovered by Jina',
+              url: 'https://x.com/alice/status/123',
+            },
+          }),
+        ].join('\n')
+      )
+    );
+
+    await expect(
+      getMediaPreview('https://x.com/alice/status/123')
+    ).resolves.toEqual(
+      expect.objectContaining({
+        authorHandle: '@alice',
+        media: [
+          expect.objectContaining({
+            previewUrl: 'https://cdn.example/photo.jpg',
+            type: 'image',
+          }),
+        ],
+        platform: 'Twitter',
+        text: 'Recovered by Jina',
+      })
+    );
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      'https://jina.example/alice/status/123',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'User-Agent': expect.any(String),
+        }),
+      })
+    );
+  });
+
+  it('uses Twitter oEmbed when direct and Jina providers fail', async () => {
+    mutableEnv.FXEMBED_PUBLIC_BASE_URL = 'https://primary.example';
+    mutableEnv.FXEMBED_FALLBACK_BASE_URL = 'https://fallback.example';
+    mutableEnv.TWITTER_JINA_BASE_URL = 'https://jina.example';
+    mutableEnv.TWITTER_OEMBED_BASE_URL = 'https://oembed.example';
+    mutableEnv.TWITTER_SYNDICATION_BASE_URL = 'https://syndication.example';
+    mutableEnv.TWITTER_SYNDICATION_JINA_BASE_URL =
+      'https://syndication-jina.example';
+    const fetchMock = vi.spyOn(global, 'fetch');
+    for (let index = 0; index < 16; index += 1) {
+      fetchMock.mockResolvedValueOnce(
+        new Response('forbidden', { status: 403 })
+      );
+    }
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({}), { status: 200 })
+    );
+    fetchMock.mockResolvedValueOnce(new Response('empty', { status: 502 }));
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          author_name: 'Alice',
+          author_url: 'https://x.com/alice',
+          html: '<blockquote><p>Hello<br>from oEmbed <a href="https://t.co/a">pic.twitter.com/a</a></p></blockquote>',
+          url: 'https://x.com/alice/status/123',
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(
+      getMediaPreview('https://x.com/alice/status/123')
+    ).resolves.toEqual(
+      expect.objectContaining({
+        authorHandle: '@alice',
+        authorName: 'Alice',
+        media: [],
+        platform: 'Twitter',
+        text: 'Hello\nfrom oEmbed',
+        title: 'Hello',
+      })
+    );
+  });
+
+  it('uses Twitter syndication fallback with media details', async () => {
+    mutableEnv.FXEMBED_PUBLIC_BASE_URL = 'https://primary.example';
+    mutableEnv.FXEMBED_FALLBACK_BASE_URL = 'https://fallback.example';
+    mutableEnv.TWITTER_JINA_BASE_URL = 'https://jina.example';
+    mutableEnv.TWITTER_SYNDICATION_BASE_URL = 'https://syndication.example';
+    const fetchMock = vi.spyOn(global, 'fetch');
+    for (let index = 0; index < 16; index += 1) {
+      fetchMock.mockResolvedValueOnce(
+        new Response('forbidden', { status: 403 })
+      );
+    }
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          created_at: '2026-06-07T21:20:00.000Z',
+          entities: {
+            urls: [
+              {
+                expanded_url: 'https://github.com/example/project',
+                url: 'https://t.co/source',
+              },
+            ],
+          },
+          favorite_count: 333,
+          mediaDetails: [
+            {
+              media_url_https: 'https://pbs.twimg.com/media/photo.png',
+              type: 'photo',
+            },
+          ],
+          photos: [
+            {
+              url: 'https://pbs.twimg.com/media/photo-from-photos.png',
+            },
+          ],
+          text: 'Recovered with media https://t.co/source',
+          user: {
+            name: 'Alice',
+            profile_image_url_https: 'https://pbs.twimg.com/profile.jpg',
+            screen_name: 'alice',
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(
+      getMediaPreview('https://x.com/alice/status/123')
+    ).resolves.toEqual(
+      expect.objectContaining({
+        authorAvatarUrl: 'https://pbs.twimg.com/profile.jpg',
+        authorHandle: '@alice',
+        authorName: 'Alice',
+        likes: 333,
+        media: [
+          expect.objectContaining({
+            previewUrl: 'https://pbs.twimg.com/media/photo.png',
+            type: 'image',
+          }),
+          expect.objectContaining({
+            previewUrl: 'https://pbs.twimg.com/media/photo-from-photos.png',
+            type: 'image',
+          }),
+        ],
+        platform: 'Twitter',
+        text: 'Recovered with media https://github.com/example/project',
+      })
+    );
+  });
+
+  it('uses Jina-wrapped Twitter syndication fallback with media details', async () => {
+    mutableEnv.FXEMBED_PUBLIC_BASE_URL = 'https://primary.example';
+    mutableEnv.FXEMBED_FALLBACK_BASE_URL = 'https://fallback.example';
+    mutableEnv.TWITTER_JINA_BASE_URL = 'https://jina.example';
+    mutableEnv.TWITTER_SYNDICATION_BASE_URL = 'https://syndication.example';
+    mutableEnv.TWITTER_SYNDICATION_JINA_BASE_URL =
+      'https://syndication-jina.example';
+    const fetchMock = vi.spyOn(global, 'fetch');
+    for (let index = 0; index < 16; index += 1) {
+      fetchMock.mockResolvedValueOnce(
+        new Response('forbidden', { status: 403 })
+      );
+    }
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          [
+            'Title:',
+            '',
+            'Markdown Content:',
+            JSON.stringify({
+              created_at: '2026-06-07T21:20:00.000Z',
+              favorite_count: 333,
+              id_str: '123',
+              mediaDetails: [
+                {
+                  media_url_https: 'https://pbs.twimg.com/media/photo.png',
+                  type: 'photo',
+                },
+              ],
+              text: 'Recovered with wrapped syndication',
+              user: {
+                name: 'Alice',
+                profile_image_url_https: 'https://pbs.twimg.com/profile.jpg',
+                screen_name: 'alice',
+              },
+            }),
+          ].join('\n')
+        )
+      );
+
+    await expect(
+      getMediaPreview('https://x.com/alice/status/123')
+    ).resolves.toEqual(
+      expect.objectContaining({
+        authorHandle: '@alice',
+        canonicalUrl: 'https://x.com/alice/status/123',
+        media: [
+          expect.objectContaining({
+            previewUrl: 'https://pbs.twimg.com/media/photo.png',
+          }),
+        ],
+        text: 'Recovered with wrapped syndication',
       })
     );
   });
