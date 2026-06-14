@@ -208,6 +208,25 @@ describe('media-component-handler', () => {
     expect(response.data.content).toBe('目前無法取得這則貼文的預覽。');
   });
 
+  it('returns a localized translate error when the remote worker fails', async () => {
+    translateMediaTextMock.mockRejectedValue(
+      new Error('Media worker request failed with status 503')
+    );
+
+    const response = (await handleMediaComponentInteraction(
+      buildInteraction(
+        buildPreviewActionCustomId('translate', 'user-1', 'src-1')
+      )
+    )) as {
+      data: { content: string; flags: number };
+      type: number;
+    };
+
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBe(64);
+    expect(response.data.content).toBe('翻譯這則預覽失敗。');
+  });
+
   it('queues a background GIF follow-up when conversion is slow', async () => {
     vi.useFakeTimers();
     createMediaGifMock.mockReturnValue(new Promise(() => {}));

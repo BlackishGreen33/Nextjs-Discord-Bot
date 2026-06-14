@@ -83,6 +83,22 @@ describe('deployment config helpers', () => {
     expect(isTranslateFeatureAvailable()).toBe(true);
   });
 
+  it('does not expose translate in remote mode when provider is disabled', () => {
+    process.env.MEDIA_MODE = 'remote';
+    process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
+    process.env.TRANSLATE_PROVIDER = 'disabled';
+
+    expect(isTranslateFeatureAvailable()).toBe(false);
+  });
+
+  it('treats translate as available in remote mode when provider is enabled', () => {
+    process.env.MEDIA_MODE = 'remote';
+    process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
+    process.env.TRANSLATE_PROVIDER = 'libretranslate';
+
+    expect(isTranslateFeatureAvailable()).toBe(true);
+  });
+
   it('treats gif as available only when remote gif service is configured in embedded mode', () => {
     process.env.MEDIA_MODE = 'embedded';
     process.env.GIF_MODE = 'remote';

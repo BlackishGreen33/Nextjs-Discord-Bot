@@ -104,14 +104,15 @@ export const getTranslateProvider = (): TranslateProvider =>
   ] as const) ?? 'disabled';
 
 export const isTranslateFeatureAvailable = () => {
+  if (getTranslateProvider() === 'disabled') {
+    return false;
+  }
+
   if (getMediaMode() === 'remote') {
     return hasRemoteMediaServiceConfig();
   }
 
-  return (
-    getTranslateProvider() !== 'disabled' &&
-    Boolean(getTrimmedEnv('TRANSLATE_API_BASE_URL'))
-  );
+  return Boolean(getTrimmedEnv('TRANSLATE_API_BASE_URL'));
 };
 
 export const isGifFeatureAvailable = () => {

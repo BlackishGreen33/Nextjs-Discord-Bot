@@ -515,8 +515,12 @@ export const handleMediaComponentInteraction = async (
       };
     } catch (error) {
       const maybeError = error as { message?: string };
+      const message = maybeError.message;
+
       return toEphemeralMessage(
-        maybeError.message ?? text.preview.errors.translateFailed
+        message?.startsWith('Media worker request failed')
+          ? text.preview.errors.translateFailed
+          : (message ?? text.preview.errors.translateFailed)
       );
     }
   }
