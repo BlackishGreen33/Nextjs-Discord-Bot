@@ -360,9 +360,17 @@ const handleSettingsInteraction = async (
           }
         : parseSettingsAction(customId);
 
+  let storedSettings: Awaited<ReturnType<typeof store.get>>;
+
+  try {
+    storedSettings = await store.get(interaction.guild_id);
+  } catch {
+    return toEphemeralMessage(defaultText.settings.errors.storageUnavailable);
+  }
+
   const current = await hydrateSettingsUpdatedBy(
     interaction.guild_id,
-    await store.get(interaction.guild_id)
+    storedSettings
   );
   const currentText = getTextForLanguage(current.autoPreview.translationTarget);
 
@@ -395,11 +403,18 @@ const handleSettingsInteraction = async (
     parsedAction,
     interaction.data.values?.[0] ?? null
   );
-  const updated = await store.set(
-    interaction.guild_id,
-    nextAutoPreview,
-    getRequesterLabel(interaction)
-  );
+  let updated: Awaited<ReturnType<typeof store.set>>;
+
+  try {
+    updated = await store.set(
+      interaction.guild_id,
+      nextAutoPreview,
+      getRequesterLabel(interaction)
+    );
+  } catch {
+    return toEphemeralMessage(currentText.settings.errors.storageUnavailable);
+  }
+
   const panel = buildSettingsPanel(updated, {
     canManage: true,
     guildName: null,

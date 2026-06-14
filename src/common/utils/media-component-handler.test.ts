@@ -341,4 +341,46 @@ describe('media-component-handler', () => {
     );
     expect(response.type).toBe(7);
   });
+
+  it('returns a storage error when settings panel state cannot be read', async () => {
+    guildSettingsStoreMock.get.mockRejectedValue(
+      new Error('redis unavailable')
+    );
+
+    const response = (await handleMediaComponentInteraction({
+      ...buildInteraction('st:v2:toggle-enabled:service'),
+      data: {
+        component_type: 2,
+        custom_id: 'st:v2:toggle-enabled:service',
+      },
+      message: {
+        id: 'settings-message',
+      },
+    })) as { data: { content: string; flags: number }; type: number };
+
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBe(64);
+    expect(response.data.content).toContain('尚未設定儲存層');
+  });
+
+  it('returns a storage error when settings panel state cannot be saved', async () => {
+    guildSettingsStoreMock.set.mockRejectedValue(
+      new Error('redis unavailable')
+    );
+
+    const response = (await handleMediaComponentInteraction({
+      ...buildInteraction('st:v2:toggle-enabled:service'),
+      data: {
+        component_type: 2,
+        custom_id: 'st:v2:toggle-enabled:service',
+      },
+      message: {
+        id: 'settings-message',
+      },
+    })) as { data: { content: string; flags: number }; type: number };
+
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBe(64);
+    expect(response.data.content).toContain('尚未設定儲存層');
+  });
 });

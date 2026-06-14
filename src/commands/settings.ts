@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 
-import { getGuildSettingsStore } from '@/common/stores';
+import { DEFAULT_GUILD_SETTINGS, getGuildSettingsStore } from '@/common/stores';
 import type { executeCommand } from '@/common/types';
 import { hydrateSettingsUpdatedBy } from '@/common/utils/settings-actor';
 import { buildSettingsPanel } from '@/common/utils/settings-panel';
@@ -70,10 +70,17 @@ export const execute: executeCommand = async (interaction) => {
     return toEphemeralMessage(defaultText.settings.errors.storageUnavailable);
   }
 
-  const storedSettings = await guildSettingsStore.get(interaction.guild_id);
+  let storedSettings: Awaited<ReturnType<typeof guildSettingsStore.get>>;
+
+  try {
+    storedSettings = await guildSettingsStore.get(interaction.guild_id);
+  } catch {
+    return toEphemeralMessage(defaultText.settings.errors.storageUnavailable);
+  }
+
   const settings = await hydrateSettingsUpdatedBy(
     interaction.guild_id,
-    storedSettings
+    storedSettings ?? DEFAULT_GUILD_SETTINGS
   );
   const canManage = hasManagePermission(interaction);
   const panel = buildSettingsPanel(settings, {

@@ -88,6 +88,20 @@ describe('/settings command', () => {
     expect(response.data.content).toContain('尚未設定儲存層');
   });
 
+  it('returns ephemeral error when settings storage cannot be read', async () => {
+    guildSettingsStoreMock.get.mockRejectedValue(
+      new Error('redis unavailable')
+    );
+
+    const response = (await execute(buildInteraction())) as {
+      data: { content: string; flags: number };
+      type: number;
+    };
+
+    expect(response.data.flags).toBe(64);
+    expect(response.data.content).toContain('尚未設定儲存層');
+  });
+
   it('returns a visible panel for admins', async () => {
     const response = (await execute(buildInteraction())) as {
       data: {
