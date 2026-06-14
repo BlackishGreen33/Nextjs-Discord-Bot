@@ -501,6 +501,22 @@ describe('media-worker utils', () => {
     });
   });
 
+  it('does not call remote translation when translate provider URL is missing', async () => {
+    mutableEnv.MEDIA_MODE = 'remote';
+    mutableEnv.MEDIA_SERVICE_BASE_URL = 'https://media-service.example';
+    mutableEnv.TRANSLATE_PROVIDER = 'libretranslate';
+    const fetchMock = vi.spyOn(global, 'fetch');
+
+    await expect(
+      translateMediaText({
+        sourceUrl: 'https://x.com/user/status/1',
+        targetLanguage: 'zh-TW',
+        text: 'Hello world',
+      })
+    ).rejects.toThrow('Translate service is not configured.');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('routes GIF conversion to the direct gif service in embedded mode', async () => {
     mutableEnv.MEDIA_MODE = 'embedded';
     mutableEnv.GIF_MODE = 'remote';

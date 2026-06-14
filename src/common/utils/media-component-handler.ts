@@ -1,5 +1,6 @@
 import { APIInteractionResponse } from 'discord-api-types/v10';
 
+import { isTranslateFeatureAvailable } from '@/common/configs/deployment';
 import { DEFAULT_GUILD_SETTINGS, getGuildSettingsStore } from '@/common/stores';
 
 import { discord_api } from './discord-api';
@@ -483,7 +484,10 @@ export const handleMediaComponentInteraction = async (
   }
 
   if (parsed.action === 'translate') {
-    if (!settings.autoPreview.features.translate) {
+    if (
+      !settings.autoPreview.features.translate ||
+      !isTranslateFeatureAvailable()
+    ) {
       return toEphemeralMessage(text.preview.errors.translateDisabled);
     }
 

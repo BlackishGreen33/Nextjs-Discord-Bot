@@ -72,6 +72,16 @@ const baseSettings = {
   updatedBy: 'system',
 };
 
+const ENV_KEYS = ['TRANSLATE_API_BASE_URL', 'TRANSLATE_PROVIDER'] as const;
+const originalEnv = Object.fromEntries(
+  ENV_KEYS.map((key) => [key, process.env[key]])
+) as Record<(typeof ENV_KEYS)[number], string | undefined>;
+
+const configureTranslateProvider = () => {
+  process.env.TRANSLATE_PROVIDER = 'libretranslate';
+  process.env.TRANSLATE_API_BASE_URL = 'https://translate.example';
+};
+
 const buildInteraction = (customId: string) =>
   ({
     channel_id: 'channel-1',
@@ -140,9 +150,18 @@ describe('media-component-handler', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    for (const key of ENV_KEYS) {
+      if (originalEnv[key] === undefined) {
+        delete process.env[key];
+        continue;
+      }
+
+      process.env[key] = originalEnv[key];
+    }
   });
 
   it('updates the preview message when translation succeeds', async () => {
+    configureTranslateProvider();
     translateMediaTextMock.mockResolvedValue({
       provider: 'translate-api',
       translatedText: '你好世界',
@@ -162,6 +181,7 @@ describe('media-component-handler', () => {
   });
 
   it('loads the source message when the preview card has no source URL', async () => {
+    configureTranslateProvider();
     translateMediaTextMock.mockResolvedValue({
       provider: 'translate-api',
       translatedText: '你好世界',
@@ -192,6 +212,7 @@ describe('media-component-handler', () => {
   });
 
   it('returns a preview error when the media provider fails', async () => {
+    configureTranslateProvider();
     getMediaPreviewMock.mockRejectedValue(new Error('media down'));
 
     const response = (await handleMediaComponentInteraction(
@@ -209,6 +230,7 @@ describe('media-component-handler', () => {
   });
 
   it('returns a localized translate error when the remote worker fails', async () => {
+    configureTranslateProvider();
     translateMediaTextMock.mockRejectedValue(
       new Error('Media worker request failed with status 503')
     );
@@ -225,6 +247,22 @@ describe('media-component-handler', () => {
     expect(response.type).toBe(4);
     expect(response.data.flags).toBe(64);
     expect(response.data.content).toBe('翻譯這則預覽失敗。');
+  });
+
+  it('returns translate disabled when the provider is not configured', async () => {
+    const response = (await handleMediaComponentInteraction(
+      buildInteraction(
+        buildPreviewActionCustomId('translate', 'user-1', 'src-1')
+      )
+    )) as {
+      data: { content: string; flags: number };
+      type: number;
+    };
+
+    expect(translateMediaTextMock).not.toHaveBeenCalled();
+    expect(response.type).toBe(4);
+    expect(response.data.flags).toBe(64);
+    expect(response.data.content).toBe('此伺服器已停用翻譯功能。');
   });
 
   it('queues a background GIF follow-up when conversion is slow', async () => {

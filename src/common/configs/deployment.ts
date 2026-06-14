@@ -103,8 +103,15 @@ export const getTranslateProvider = (): TranslateProvider =>
     'libretranslate',
   ] as const) ?? 'disabled';
 
+export const getTranslateApiBaseUrl = () =>
+  getTrimmedEnv('TRANSLATE_API_BASE_URL');
+
 export const isTranslateFeatureAvailable = () => {
   if (getTranslateProvider() === 'disabled') {
+    return false;
+  }
+
+  if (!getTranslateApiBaseUrl()) {
     return false;
   }
 
@@ -112,7 +119,7 @@ export const isTranslateFeatureAvailable = () => {
     return hasRemoteMediaServiceConfig();
   }
 
-  return Boolean(getTrimmedEnv('TRANSLATE_API_BASE_URL'));
+  return true;
 };
 
 export const isGifFeatureAvailable = () => {

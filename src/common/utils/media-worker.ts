@@ -203,6 +203,10 @@ export const translateMediaText = async (params: {
   targetLanguage: string;
   text: string;
 }): Promise<TranslateMediaTextResult> => {
+  if (!isTranslateFeatureAvailable()) {
+    throw new Error('Translate service is not configured.');
+  }
+
   if (getMediaMode() === 'remote') {
     const payload = await postJson<Partial<TranslateMediaTextResult>>(
       getMediaServiceBaseUrl(),
@@ -219,10 +223,6 @@ export const translateMediaText = async (params: {
       provider: asStringOrNull(payload.provider),
       translatedText: payload.translatedText,
     };
-  }
-
-  if (!isTranslateFeatureAvailable()) {
-    throw new Error('Translate service is not configured.');
   }
 
   return translateMediaTextEmbedded({

@@ -91,10 +91,19 @@ describe('deployment config helpers', () => {
     expect(isTranslateFeatureAvailable()).toBe(false);
   });
 
-  it('treats translate as available in remote mode when provider is enabled', () => {
+  it('does not expose translate in remote mode without translate provider URL', () => {
     process.env.MEDIA_MODE = 'remote';
     process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
     process.env.TRANSLATE_PROVIDER = 'libretranslate';
+
+    expect(isTranslateFeatureAvailable()).toBe(false);
+  });
+
+  it('treats translate as available in remote mode when provider is configured', () => {
+    process.env.MEDIA_MODE = 'remote';
+    process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
+    process.env.TRANSLATE_PROVIDER = 'libretranslate';
+    process.env.TRANSLATE_API_BASE_URL = 'https://translate.example';
 
     expect(isTranslateFeatureAvailable()).toBe(true);
   });
