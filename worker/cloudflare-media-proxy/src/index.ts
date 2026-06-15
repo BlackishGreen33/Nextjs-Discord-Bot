@@ -1188,6 +1188,7 @@ const inferWorkersAiSourceLanguage = (value: string) => {
 
 const splitWorkersAiTranslateText = (value: string) => {
   const paragraphs = value
+    .trim()
     .split(/\n{2,}/)
     .map((part) => part.trim())
     .filter(Boolean);
@@ -1202,43 +1203,51 @@ const splitWorkersAiTranslateText = (value: string) => {
     }
   };
 
-  for (const paragraph of paragraphs) {
-    if (paragraph.length > WORKERS_AI_TRANSLATE_CHUNK_LENGTH) {
+  for (let index = 0; index < paragraphs.length; index += 1) {
+    const trimmedParagraph = paragraphs[index];
+
+    if (!trimmedParagraph) {
+      continue;
+    }
+
+    if (index > 0) {
+      pushChunk();
+      chunks.push('');
+    }
+
+    const paragraphLines = trimmedParagraph
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (
+      paragraphLines.length > 1 ||
+      trimmedParagraph.length > WORKERS_AI_TRANSLATE_CHUNK_LENGTH
+    ) {
       pushChunk();
 
-      const lines = paragraph
-        .split(/\n+/)
-        .map((line) => line.trim())
-        .filter(Boolean);
-
-      for (const line of lines) {
+      for (const line of paragraphLines) {
         if (line.length > WORKERS_AI_TRANSLATE_CHUNK_LENGTH) {
           chunks.push(line);
           continue;
         }
 
-        if (
-          currentChunk.length + line.length + 1 >
-          WORKERS_AI_TRANSLATE_CHUNK_LENGTH
-        ) {
-          pushChunk();
-        }
-
-        currentChunk = currentChunk ? `${currentChunk}\n${line}` : line;
+        chunks.push(line);
       }
 
-      pushChunk();
       continue;
     }
 
     if (
-      currentChunk.length + paragraph.length + 2 >
+      currentChunk.length + trimmedParagraph.length + 2 >
       WORKERS_AI_TRANSLATE_CHUNK_LENGTH
     ) {
       pushChunk();
     }
 
-    currentChunk = currentChunk ? `${currentChunk}\n\n${paragraph}` : paragraph;
+    currentChunk = currentChunk
+      ? `${currentChunk}\n\n${trimmedParagraph}`
+      : trimmedParagraph;
   }
 
   pushChunk();
@@ -1278,6 +1287,11 @@ const handleWorkersAiTranslate = async (
   const translatedChunks: string[] = [];
 
   for (const chunk of splitWorkersAiTranslateText(payload.text)) {
+    if (!chunk) {
+      translatedChunks.push('');
+      continue;
+    }
+
     const translatedText = await translateWorkersAiChunk(
       env,
       targetLanguage,
@@ -1293,7 +1307,10 @@ const handleWorkersAiTranslate = async (
 
   return jsonResponse({
     provider: 'workers-ai',
-    translatedText: translatedChunks.join('\n\n'),
+    translatedText: translatedChunks
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim(),
   });
 };
 

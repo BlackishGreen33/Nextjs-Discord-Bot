@@ -3,6 +3,11 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import { createServer } from 'node:http';
 
+import { buildPreviewFiles } from './preview-attachments.mjs';
+import {
+  buildPreviewReplyNonce,
+  createPreviewMessageDeduper,
+} from './preview-message';
 import {
   DEFAULT_GUILD_SETTINGS,
   getGuildSettingsStore,
@@ -13,11 +18,6 @@ import {
 } from '../../src/common/utils/media-link';
 import { getMediaPreview } from '../../src/common/utils/media-worker';
 import { buildPreviewMessagePayload } from '../../src/common/utils/preview-card';
-import { buildPreviewFiles } from './preview-attachments.mjs';
-import {
-  buildPreviewReplyNonce,
-  createPreviewMessageDeduper,
-} from './preview-message';
 
 const token = process.env.DISCORD_GATEWAY_TOKEN ?? process.env.BOT_TOKEN;
 const port = Number.parseInt(process.env.PORT ?? '', 10);
@@ -91,6 +91,55 @@ const pushDebugMessage = (value: unknown) => {
     normalized,
     ...gatewayState.debugMessages,
   ].slice(0, 8);
+};
+
+const summarizeDiscordError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+
+  const maybeDiscordError = error as Error & {
+    code?: unknown;
+    rawError?: {
+      code?: unknown;
+      message?: unknown;
+    };
+    status?: unknown;
+  };
+  const details = [
+    typeof maybeDiscordError.status === 'number'
+      ? `status=${maybeDiscordError.status}`
+      : null,
+    typeof maybeDiscordError.code === 'number'
+      ? `code=${maybeDiscordError.code}`
+      : null,
+    typeof maybeDiscordError.rawError?.code === 'number'
+      ? `rawCode=${maybeDiscordError.rawError.code}`
+      : null,
+    typeof maybeDiscordError.rawError?.message === 'string'
+      ? `rawMessage=${maybeDiscordError.rawError.message}`
+      : null,
+  ].filter(Boolean);
+
+  return details.length > 0
+    ? `${error.message} (${details.join(', ')})`
+    : error.message;
+};
+
+const suppressSourceEmbeds = async (message: {
+  id: string;
+  suppressEmbeds: (suppress?: boolean) => Promise<unknown>;
+}) => {
+  try {
+    await message.suppressEmbeds(true);
+    return;
+  } catch (error) {
+    const summary = summarizeDiscordError(error);
+    const messageSummary = `[gateway-listener] failed to suppress source embeds for ${message.id}: ${summary}`;
+
+    pushDebugMessage(messageSummary);
+    console.warn(messageSummary);
+  }
 };
 
 const runDiscordRestProbe = async () => {
@@ -243,21 +292,14 @@ client.on('messageCreate', async (message) => {
   }
 
   try {
+    await suppressSourceEmbeds(message);
+
     const preview = await getMediaPreview(sourceUrl);
     const payload = buildPreviewMessagePayload(preview, settings, {
       ownerUserId: message.author.id,
       sourceMessageId: message.id,
     });
     const files = await buildPreviewFiles(preview, settings, process.env);
-
-    try {
-      await message.suppressEmbeds(true);
-    } catch (error) {
-      console.warn(
-        '[gateway-listener] failed to suppress source embeds',
-        error
-      );
-    }
 
     await message.reply({
       ...((files.length ?? 0) > 0 ? { files } : {}),

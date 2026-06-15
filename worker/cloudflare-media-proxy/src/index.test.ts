@@ -761,6 +761,69 @@ describe('cloudflare media proxy', () => {
     );
   });
 
+  it('preserves paragraph and list line breaks in Workers AI translations', async () => {
+    const aiRun = vi
+      .fn()
+      .mockResolvedValueOnce({
+        translated_text: '你的 AI 代理寫了 80 行程式碼，其實只需要 1 行？',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '運作方式：',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '1. 先檢查：這真的需要嗎？（YAGNI）',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '2. 標準函式庫裡有了嗎？',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '結果：',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '• 程式碼減少 80–94%',
+      });
+
+    const response = await worker.fetch(
+      createRequest('/v1/translate', {
+        sourceUrl: 'https://x.com/alice/status/123',
+        targetLanguage: 'zh-TW',
+        text: [
+          'AI agent kamu nulis 80 baris code buat yang sebenarnya cuma butuh 1 baris?',
+          '',
+          'Cara kerjanya:',
+          '1. Cek dulu: Apakah ini perlu? (YAGNI)',
+          '2. Sudah ada di stdlib?',
+          '',
+          'Hasil benchmark:',
+          '• 80–94% less code',
+        ].join('\n'),
+      }),
+      {
+        ...env,
+        AI: {
+          run: aiRun,
+        },
+        TRANSLATE_PROVIDER: 'workers-ai',
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      provider: 'workers-ai',
+      translatedText: [
+        '你的 AI 代理寫了 80 行程式碼，其實只需要 1 行？',
+        '',
+        '運作方式：',
+        '1. 先檢查：這真的需要嗎？（YAGNI）',
+        '2. 標準函式庫裡有了嗎？',
+        '',
+        '結果：',
+        '• 程式碼減少 80–94%',
+      ].join('\n'),
+    });
+    expect(aiRun).toHaveBeenCalledTimes(6);
+  });
+
   it('proxies GIF requests to the configured GIF service', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
