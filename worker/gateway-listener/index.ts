@@ -250,14 +250,6 @@ client.on('messageCreate', async (message) => {
     });
     const files = await buildPreviewFiles(preview, settings, process.env);
 
-    await message.reply({
-      ...((files.length ?? 0) > 0 ? { files } : {}),
-      ...payload,
-      enforceNonce: true,
-      failIfNotExists: false,
-      nonce: buildPreviewReplyNonce(message.id),
-    });
-
     try {
       await message.suppressEmbeds(true);
     } catch (error) {
@@ -266,6 +258,14 @@ client.on('messageCreate', async (message) => {
         error
       );
     }
+
+    await message.reply({
+      ...((files.length ?? 0) > 0 ? { files } : {}),
+      ...payload,
+      enforceNonce: true,
+      failIfNotExists: false,
+      nonce: buildPreviewReplyNonce(message.id),
+    });
   } catch (error) {
     console.error('[gateway-listener] failed to create preview card', error);
   }

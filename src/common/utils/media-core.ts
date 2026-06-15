@@ -232,6 +232,98 @@ const mapTwitterMedia = (value: unknown): MediaPreviewItem[] => {
   }, []);
 };
 
+const getTwitterCardImageUrl = (value: unknown) => {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const card = value as JsonRecord;
+  const image =
+    card.image && typeof card.image === 'object'
+      ? (card.image as JsonRecord)
+      : null;
+  const directImageUrl = asStringOrNull(image?.url);
+
+  if (directImageUrl) {
+    return directImageUrl;
+  }
+
+  const bindingValues =
+    card.binding_values && typeof card.binding_values === 'object'
+      ? (card.binding_values as JsonRecord)
+      : null;
+  const preferredBindingKeys = [
+    'photo_image_full_size_large',
+    'thumbnail_image_original',
+    'thumbnail_image_large',
+    'summary_photo_image_small',
+    'thumbnail_image',
+  ];
+
+  for (const key of preferredBindingKeys) {
+    const binding =
+      bindingValues?.[key] && typeof bindingValues[key] === 'object'
+        ? (bindingValues[key] as JsonRecord)
+        : null;
+    const imageValue =
+      binding?.image_value && typeof binding.image_value === 'object'
+        ? (binding.image_value as JsonRecord)
+        : null;
+    const imageUrl = asStringOrNull(imageValue?.url);
+
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  return null;
+};
+
+const appendTwitterCardMedia = (
+  mediaItems: JsonRecord[],
+  card: unknown
+): JsonRecord[] => {
+  const cardImageUrl = getTwitterCardImageUrl(card);
+
+  if (!cardImageUrl) {
+    return mediaItems;
+  }
+
+  return [
+    ...mediaItems,
+    {
+      type: 'image',
+      url: cardImageUrl,
+    },
+  ];
+};
+
+const getTwitterCardUrl = (value: unknown) => {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const card = value as JsonRecord;
+
+  return asStringOrNull(card.url);
+};
+
+const trimTextAtCardUrl = (text: string | null, card: unknown) => {
+  if (!text || !getTwitterCardImageUrl(card)) {
+    return text;
+  }
+
+  const cardUrl = getTwitterCardUrl(card);
+
+  if (!cardUrl) {
+    return text;
+  }
+
+  const cardUrlIndex = text.indexOf(cardUrl);
+
+  return cardUrlIndex === -1 ? text : text.slice(0, cardUrlIndex).trimEnd();
+};
+
 const fetchTwitterApiPayload = async (
   baseUrl: string,
   statusId: string,
@@ -320,19 +412,23 @@ const mapTwitterSyndicationPayload = (payload: JsonRecord): JsonRecord => {
 
     return accumulator;
   }, new Map());
-  const text = Array.from(expandedUrlMap.entries()).reduce(
+  const expandedText = Array.from(expandedUrlMap.entries()).reduce(
     (current, [shortUrl, expandedUrl]) =>
       current.replaceAll(shortUrl, expandedUrl),
     asStringOrNull(payload.text) ?? ''
   );
-  const normalizedMedia = [...mediaDetails, ...photos];
+  const text = trimTextAtCardUrl(expandedText, payload.card);
+  const normalizedMedia = appendTwitterCardMedia(
+    [...mediaDetails, ...photos].flatMap((item) =>
+      item && typeof item === 'object' ? [item as JsonRecord] : []
+    ),
+    payload.card
+  );
 
   const mapped = {
     created_at: asStringOrNull(payload.created_at),
     likes: asNumberOrNull(payload.favorite_count),
-    media_extended: normalizedMedia.map((item) => {
-      const media =
-        item && typeof item === 'object' ? (item as JsonRecord) : {};
+    media_extended: normalizedMedia.map((media) => {
       const url =
         asStringOrNull(media.media_url_https) ?? asStringOrNull(media.url);
       return {
@@ -539,10 +635,18 @@ const fetchTwitterPreview = async (
     tweet.media && typeof tweet.media === 'object'
       ? (tweet.media as JsonRecord)
       : null;
-  const allMedia =
-    media?.all ??
-    (Array.isArray(tweet.media_extended) ? tweet.media_extended : null);
-  const text = asStringOrNull(tweet.text);
+  const allMedia = appendTwitterCardMedia(
+    [
+      ...(Array.isArray(media?.all) ? (media.all as unknown[]) : []),
+      ...(Array.isArray(tweet.media_extended)
+        ? (tweet.media_extended as unknown[])
+        : []),
+    ].flatMap((item) =>
+      item && typeof item === 'object' ? [item as JsonRecord] : []
+    ),
+    tweet.card
+  );
+  const text = trimTextAtCardUrl(asStringOrNull(tweet.text), tweet.card);
 
   return {
     authorAvatarUrl:

@@ -405,6 +405,16 @@ describe('cloudflare media proxy', () => {
             ],
           },
           favorite_count: 333,
+          card: {
+            url: 'https://github.com/example/project',
+            binding_values: {
+              photo_image_full_size_large: {
+                image_value: {
+                  url: 'https://pbs.twimg.com/card_img/card.jpg',
+                },
+              },
+            },
+          },
           mediaDetails: [
             {
               media_url_https: 'https://pbs.twimg.com/media/photo.png',
@@ -457,7 +467,7 @@ describe('cloudflare media proxy', () => {
         authorName: 'Alice',
         likes: 333,
         platform: 'Twitter',
-        text: 'Recovered with media https://github.com/example/project',
+        text: 'Recovered with media',
       })
     );
     expect(body.media[0]).toEqual(
@@ -469,6 +479,12 @@ describe('cloudflare media proxy', () => {
     expect(body.media[1]).toEqual(
       expect.objectContaining({
         previewUrl: 'https://pbs.twimg.com/media/photo-from-photos.png',
+        type: 'image',
+      })
+    );
+    expect(body.media[2]).toEqual(
+      expect.objectContaining({
+        previewUrl: 'https://pbs.twimg.com/card_img/card.jpg',
         type: 'image',
       })
     );
@@ -493,6 +509,16 @@ describe('cloudflare media proxy', () => {
               created_at: '2026-06-07T21:20:00.000Z',
               favorite_count: 333,
               id_str: '123',
+              card: {
+                url: 'https://github.com/example/project',
+                binding_values: {
+                  photo_image_full_size_large: {
+                    image_value: {
+                      url: 'https://pbs.twimg.com/card_img/card.jpg',
+                    },
+                  },
+                },
+              },
               mediaDetails: [
                 {
                   media_url_https: 'https://pbs.twimg.com/media/photo.png',
@@ -539,6 +565,11 @@ describe('cloudflare media proxy', () => {
     expect(body.media[0]).toEqual(
       expect.objectContaining({
         previewUrl: 'https://pbs.twimg.com/media/photo.png',
+      })
+    );
+    expect(body.media[1]).toEqual(
+      expect.objectContaining({
+        previewUrl: 'https://pbs.twimg.com/card_img/card.jpg',
       })
     );
   });

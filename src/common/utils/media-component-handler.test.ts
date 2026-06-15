@@ -196,9 +196,17 @@ describe('media-component-handler', () => {
       })
     );
     const payload = discordPatchMock.mock.calls[0]?.[1] as {
-      embeds: Array<{ description?: string }>;
+      embeds: Array<{
+        description?: string;
+        fields?: Array<{ inline?: boolean; name?: string; value?: string }>;
+      }>;
     };
-    expect(payload.embeds[0]?.description).toContain('翻譯 (zh-TW)');
+    expect(payload.embeds[0]?.description).toBe('Hello world');
+    expect(payload.embeds[0]?.fields?.at(-1)).toEqual({
+      inline: false,
+      name: '\u200B',
+      value: '你好世界',
+    });
   });
 
   it('loads the source message when the preview card has no source URL', async () => {

@@ -365,6 +365,16 @@ describe('media-worker utils', () => {
             ],
           },
           favorite_count: 333,
+          card: {
+            url: 'https://github.com/example/project',
+            binding_values: {
+              photo_image_full_size_large: {
+                image_value: {
+                  url: 'https://pbs.twimg.com/card_img/card.jpg',
+                },
+              },
+            },
+          },
           mediaDetails: [
             {
               media_url_https: 'https://pbs.twimg.com/media/photo.png',
@@ -404,9 +414,13 @@ describe('media-worker utils', () => {
             previewUrl: 'https://pbs.twimg.com/media/photo-from-photos.png',
             type: 'image',
           }),
+          expect.objectContaining({
+            previewUrl: 'https://pbs.twimg.com/card_img/card.jpg',
+            type: 'image',
+          }),
         ],
         platform: 'Twitter',
-        text: 'Recovered with media https://github.com/example/project',
+        text: 'Recovered with media',
       })
     );
   });
@@ -436,6 +450,16 @@ describe('media-worker utils', () => {
               created_at: '2026-06-07T21:20:00.000Z',
               favorite_count: 333,
               id_str: '123',
+              card: {
+                url: 'https://github.com/example/project',
+                binding_values: {
+                  photo_image_full_size_large: {
+                    image_value: {
+                      url: 'https://pbs.twimg.com/card_img/card.jpg',
+                    },
+                  },
+                },
+              },
               mediaDetails: [
                 {
                   media_url_https: 'https://pbs.twimg.com/media/photo.png',
@@ -462,6 +486,9 @@ describe('media-worker utils', () => {
         media: [
           expect.objectContaining({
             previewUrl: 'https://pbs.twimg.com/media/photo.png',
+          }),
+          expect.objectContaining({
+            previewUrl: 'https://pbs.twimg.com/card_img/card.jpg',
           }),
         ],
         text: 'Recovered with wrapped syndication',

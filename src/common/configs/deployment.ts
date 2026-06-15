@@ -56,7 +56,7 @@ export const getMediaTimeoutMs = () => {
     getTrimmedEnv('MEDIA_WORKER_TIMEOUT_MS');
   const timeout = Number(rawValue);
 
-  return Number.isFinite(timeout) && timeout > 0 ? timeout : 8000;
+  return Number.isFinite(timeout) && timeout > 0 ? timeout : 20000;
 };
 
 export const getMediaMode = (): MediaMode => {
@@ -108,12 +108,17 @@ export const getTranslateApiBaseUrl = () =>
   getTrimmedEnv('TRANSLATE_API_BASE_URL');
 
 export const isTranslateFeatureAvailable = () => {
-  if (getTranslateProvider() === 'disabled') {
-    return false;
-  }
+  const provider = getTranslateProvider();
 
   if (getMediaMode() === 'remote') {
-    return hasRemoteMediaServiceConfig();
+    return (
+      hasRemoteMediaServiceConfig() &&
+      (!getTrimmedEnv('TRANSLATE_PROVIDER') || provider !== 'disabled')
+    );
+  }
+
+  if (provider === 'disabled') {
+    return false;
   }
 
   return Boolean(getTranslateApiBaseUrl());

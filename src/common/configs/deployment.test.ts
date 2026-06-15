@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   getGifMode,
   getMediaMode,
+  getMediaTimeoutMs,
   getStorageDriver,
   isGifFeatureAvailable,
   isTranslateFeatureAvailable,
@@ -14,7 +15,9 @@ const ENV_KEYS = [
   'GIF_SERVICE_BASE_URL',
   'MEDIA_MODE',
   'MEDIA_SERVICE_BASE_URL',
+  'MEDIA_TIMEOUT_MS',
   'MEDIA_WORKER_BASE_URL',
+  'MEDIA_WORKER_TIMEOUT_MS',
   'STORAGE_DRIVER',
   'TRANSLATE_API_BASE_URL',
   'TRANSLATE_PROVIDER',
@@ -75,6 +78,13 @@ describe('deployment config helpers', () => {
     expect(getMediaMode()).toBe('embedded');
   });
 
+  it('defaults media requests to a translation-friendly timeout', () => {
+    delete process.env.MEDIA_TIMEOUT_MS;
+    delete process.env.MEDIA_WORKER_TIMEOUT_MS;
+
+    expect(getMediaTimeoutMs()).toBe(20000);
+  });
+
   it('treats translate as available when embedded provider env is configured', () => {
     process.env.MEDIA_MODE = 'embedded';
     process.env.TRANSLATE_PROVIDER = 'libretranslate';
@@ -83,12 +93,20 @@ describe('deployment config helpers', () => {
     expect(isTranslateFeatureAvailable()).toBe(true);
   });
 
-  it('does not expose translate in remote mode when provider is disabled', () => {
+  it('does not expose translate in remote mode when provider is explicitly disabled', () => {
     process.env.MEDIA_MODE = 'remote';
     process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
     process.env.TRANSLATE_PROVIDER = 'disabled';
 
     expect(isTranslateFeatureAvailable()).toBe(false);
+  });
+
+  it('treats translate as available in remote mode without local provider env', () => {
+    process.env.MEDIA_MODE = 'remote';
+    process.env.MEDIA_SERVICE_BASE_URL = 'https://media.example';
+    delete process.env.TRANSLATE_PROVIDER;
+
+    expect(isTranslateFeatureAvailable()).toBe(true);
   });
 
   it('treats translate as available in remote mode when media service is configured', () => {
