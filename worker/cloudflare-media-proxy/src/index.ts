@@ -94,12 +94,14 @@ const SENSITIVE_LABEL_HINTS = [
 ];
 const WORKERS_AI_TRANSLATE_MODEL = '@cf/meta/m2m100-1.2b';
 const WORKERS_AI_TRANSLATE_CHUNK_LENGTH = 320;
+const WORKER_VERSION = '2026-06-15-translate-fallback-v2';
 
 const jsonResponse = (data: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(data), {
     ...init,
     headers: {
       ...JSON_HEADERS,
+      'X-Discord-Media-Proxy-Version': WORKER_VERSION,
       ...(init?.headers ?? {}),
     },
   });
@@ -1299,7 +1301,8 @@ const handleWorkersAiTranslate = async (
     );
 
     if (!translatedText) {
-      return errorResponse(502, 'Workers AI did not return translated text.');
+      translatedChunks.push(chunk);
+      continue;
     }
 
     translatedChunks.push(translatedText);

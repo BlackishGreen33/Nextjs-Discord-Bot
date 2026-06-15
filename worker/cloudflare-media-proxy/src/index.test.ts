@@ -824,6 +824,51 @@ describe('cloudflare media proxy', () => {
     expect(aiRun).toHaveBeenCalledTimes(6);
   });
 
+  it('keeps code-like chunks when Workers AI returns empty text', async () => {
+    const aiRun = vi
+      .fn()
+      .mockResolvedValueOnce({
+        translated_text: '範例：',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '',
+      })
+      .mockResolvedValueOnce({
+        translated_text: '支援：Hermes、Codex',
+      });
+
+    const response = await worker.fetch(
+      createRequest('/v1/translate', {
+        sourceUrl: 'https://x.com/alice/status/123',
+        targetLanguage: 'zh-TW',
+        text: [
+          'Contoh:',
+          '✅ Ponytail: <input type="date"> <!-- ponytail: browser has one -->',
+          '',
+          'Support: Hermes, Codex',
+        ].join('\n'),
+      }),
+      {
+        ...env,
+        AI: {
+          run: aiRun,
+        },
+        TRANSLATE_PROVIDER: 'workers-ai',
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      provider: 'workers-ai',
+      translatedText: [
+        '範例：',
+        '✅ Ponytail: <input type="date"> <!-- ponytail: browser has one -->',
+        '',
+        '支援：Hermes、Codex',
+      ].join('\n'),
+    });
+  });
+
   it('proxies GIF requests to the configured GIF service', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
