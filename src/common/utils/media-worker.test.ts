@@ -83,6 +83,7 @@ describe('media-worker utils', () => {
           sourceUrl: 'https://pixiv.net/artworks/1',
           text: 'Hello world',
           title: 'Hello world',
+          translatedText: '你好世界',
         }),
         { status: 200 }
       )
@@ -101,6 +102,7 @@ describe('media-worker utils', () => {
             type: 'video',
           }),
         ],
+        translatedText: null,
       })
     );
     expect(global.fetch).toHaveBeenCalledWith(

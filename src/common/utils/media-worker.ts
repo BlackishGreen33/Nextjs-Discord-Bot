@@ -191,7 +191,7 @@ export const getMediaPreview = async (
       sourceUrl: asStringOrNull(payload.sourceUrl) ?? sourceUrl,
       text: asStringOrNull(payload.text),
       title: asStringOrNull(payload.title),
-      translatedText: asStringOrNull(payload.translatedText),
+      translatedText: null,
     };
   }
 
