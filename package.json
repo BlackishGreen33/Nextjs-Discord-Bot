@@ -22,7 +22,7 @@
   "dependencies": {
     "@discordjs/builders": "^1.13.1",
     "@prisma/client": "^6.19.2",
-    "discord.js": "^14.25.1",
+    "discord.js": "^14.27.0",
     "next": "16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
