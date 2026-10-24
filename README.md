@@ -27,7 +27,7 @@ Slash commands, guild settings, FAQ storage, and automatic preview cards for X /
   <img src="https://img.shields.io/badge/TypeScript-5.9.3-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5.9.3" />
   <img src="https://img.shields.io/badge/discord.js-14.25.1-5865f2?style=flat-square&logo=discord&logoColor=white" alt="discord.js 14.25.1" />
   <img src="https://img.shields.io/badge/Prisma-7.10.0-2d3748?style=flat-square&logo=prisma" alt="Prisma 7.10.0" />
-  <img src="https://img.shields.io/badge/Vitest-4.0.18-6e9f18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 4.0.18" />
+  <img src="https://img.shields.io/badge/Vitest-5.0.0-6e9f18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 5.0.0" />
 </p>
 
 <p>
