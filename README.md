@@ -18,7 +18,7 @@ Slash commands, guild settings, FAQ storage, and automatic preview cards for X /
   <a href="./LICENSE.md">
     <img src="https://img.shields.io/badge/license-MIT-16a34a?style=flat-square" alt="MIT license" />
   </a>
-  <img src="https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 20+" />
+  <img src="https://img.shields.io/badge/node-%3E%3D22.13-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 22.13+" />
   <img src="https://img.shields.io/badge/pnpm-%3E%3D10-f69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm 10+" />
 </p>
 
@@ -26,8 +26,8 @@ Slash commands, guild settings, FAQ storage, and automatic preview cards for X /
   <img src="https://img.shields.io/badge/Next.js-16.1.6-000000?style=flat-square&logo=nextdotjs" alt="Next.js 16.1.6" />
   <img src="https://img.shields.io/badge/TypeScript-5.9.3-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5.9.3" />
   <img src="https://img.shields.io/badge/discord.js-14.25.1-5865f2?style=flat-square&logo=discord&logoColor=white" alt="discord.js 14.25.1" />
-  <img src="https://img.shields.io/badge/Prisma-6.19.2-2d3748?style=flat-square&logo=prisma" alt="Prisma 6.19.2" />
-  <img src="https://img.shields.io/badge/Vitest-4.0.18-6e9f18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 4.0.18" />
+  <img src="https://img.shields.io/badge/Prisma-7.10.0-2d3748?style=flat-square&logo=prisma" alt="Prisma 7.10.0" />
+  <img src="https://img.shields.io/badge/Vitest-5.0.0-6e9f18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 5.0.0" />
 </p>
 
 <p>
@@ -86,8 +86,8 @@ docs/en/runbooks/               English deployment and operations runbooks
 
 ### Requirements
 
-- Node.js `20+`
-- pnpm `10+`
+- Node.js `^22.13.0 || ^24.0.0 || >=26.0.0`
+- pnpm `10.32.1`
 
 ### 1. Create local environment
 
@@ -111,6 +111,8 @@ TRANSLATE_PROVIDER=disabled
 pnpm install
 pnpm prisma:generate
 ```
+
+Prisma CLI commands load the same `.env*` files as Next.js through `prisma.config.ts`. Client generation works without `DATABASE_URL`; schema operations and Prisma storage require it.
 
 ### 3. Apply the Prisma schema
 

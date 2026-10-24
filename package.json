@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -21,16 +24,18 @@
   },
   "dependencies": {
     "@discordjs/builders": "^1.14.1",
-    "@prisma/client": "^6.19.2",
+    "@next/env": "16.3.4",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "discord.js": "^14.27.0",
     "next": "16.3.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.13",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@eslint/compat": "^2.1.0",
+    "@eslint/compat": "^2.1.1",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.3",
@@ -47,9 +52,9 @@
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "prisma": "^6.19.2",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.0"
   }
 }
