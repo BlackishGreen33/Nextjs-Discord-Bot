@@ -12,7 +12,7 @@ This file records only workflows, commands, and runbooks that can be verified di
 ## Project and Environment
 
 - Project: Next.js App Router Discord Bot written in TypeScript
-- Node.js: 22.12+ on 22.x, or 24+
+- Node.js: 22.13+ on 22.x, 24.x, or 26+
 - Package manager: pnpm 10+
 - Main HTTP routes:
   - `POST /api/discord-bot/interactions`

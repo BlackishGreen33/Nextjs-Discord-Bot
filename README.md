@@ -18,7 +18,7 @@ Slash commands, guild settings, FAQ storage, and automatic preview cards for X /
   <a href="./LICENSE.md">
     <img src="https://img.shields.io/badge/license-MIT-16a34a?style=flat-square" alt="MIT license" />
   </a>
-  <img src="https://img.shields.io/badge/node-%3E%3D22.12-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 22.12+" />
+  <img src="https://img.shields.io/badge/node-%3E%3D22.13-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 22.13+" />
   <img src="https://img.shields.io/badge/pnpm-%3E%3D10-f69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm 10+" />
 </p>
 
@@ -86,7 +86,7 @@ docs/en/runbooks/               English deployment and operations runbooks
 
 ### Requirements
 
-- Node.js `^22.12.0 || >=24.0.0`
+- Node.js `^22.13.0 || ^24.0.0 || >=26.0.0`
 - pnpm `10.32.1`
 
 ### 1. Create local environment

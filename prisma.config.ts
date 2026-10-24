@@ -1,7 +1,7 @@
 import { loadEnvConfig } from '@next/env';
 import { defineConfig } from 'prisma/config';
 
-loadEnvConfig(process.cwd());
+loadEnvConfig(process.cwd(), process.env.NODE_ENV === 'development');
 
 export default defineConfig({
   datasource: {
